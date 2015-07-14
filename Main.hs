@@ -10,6 +10,15 @@ import System.IO
 -}
 type Context = StateT GameState IO
 
+data Block =
+    I |
+    J |
+    L |
+    O |
+    S |
+    T |
+    Z  deriving (Show, Read, Eq, Ord)
+
 data GameState = GameState {
     playerName :: String,
     board      :: [Int]
@@ -17,7 +26,7 @@ data GameState = GameState {
 
 -- crude debugging flag
 debug' :: Bool
-debug' = True
+debug' = False
 
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
