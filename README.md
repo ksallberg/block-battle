@@ -5,6 +5,7 @@ Haskell starter bot for AI Block Battle (Beta)
 http://theaigames.com/competitions/ai-block-battle
 <br/>
 Let's create a starter bot (as exists for Java, C#, Scala):
+<br/>
 http://theaigames.com/competitions/ai-block-battle/getting-started
 <br/>
 <br/>
