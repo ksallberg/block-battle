@@ -30,7 +30,7 @@ data GameState = GameState {
     timebank          :: Int,
     timePerMove       :: Int,
     players           :: [Player],
-    myBot             :: Player,
+    myBot             :: String,
     fieldHeight       :: Int,
     fieldWidth        :: Int,
     gameRound         :: Int,
@@ -94,7 +94,7 @@ handleSettings ["player_names", names] = do
     return ()
 handleSettings ["your_bot", botname] = do
     state <- get
-    return ()
+    put $ state{ myBot = botname }
 handleSettings ["field_width", width] = do
     state <- get
     put $ state{ fieldWidth = (read width :: Int) }
@@ -116,10 +116,10 @@ handleUpdate ["game", "this_piece_type", piece] = do
 handleUpdate ["game", "next_piece_type", piece] = do
     state <- get
     put $ state{ nextPieceType = (read piece :: Block) }
-handleUpdate ["game", "this_piece_position", pos]   = do
-    let [x, y] = [10, 4]-- TODO: splitOn "," pos
+handleUpdate ["game", "this_piece_position", pos] = do
     state <- get
-    put $ state{ thisPiecePosition = (x, y) }
+    put $ state{ thisPiecePosition =
+                     (takeWhile (/=',') pos, tail $ dropWhile (/=',') pos) }
 handleUpdate [playername, "row_points", rowpoints] = do
     state <- get
     return ()
