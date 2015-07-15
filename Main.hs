@@ -164,14 +164,14 @@ handleUpdate ["game", "this_piece_position", pos] = do
     put $ state{ thisPiecePosition = (read x :: Int, read y :: Int) }
 handleUpdate [playern, "row_points", rowPointsVal] = do
     state <- get
-    let updatePls = [case (playerName pl) == playern of
+    let updatePls = [case playerName pl == playern of
                          True  -> pl{rowPoints = read rowPointsVal :: Int}
                          False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
 handleUpdate [playern, "combo", comboVal] = do
     state <- get
-    let updatePls = [case (playerName pl) == playern of
+    let updatePls = [case playerName pl == playern of
                          True  -> pl{combo = read comboVal :: Int}
                          False -> pl
                      | pl <- players state]
@@ -181,7 +181,7 @@ handleUpdate [playern, "field", fieldVal] = do
     let fieldParts = splitBy ';' fieldVal
         fieldLs    = [map (\x -> read x :: Int) (splitBy ',' fieldPart)
                       | fieldPart <- fieldParts]
-        updatePls = [case (playerName pl) == playern of
+        updatePls = [case playerName pl == playern of
                         True  -> pl{field = fieldLs}
                         False -> pl
                      | pl <- players state]
@@ -190,10 +190,10 @@ handleUpdate _ = error "Unsupported update received!"
 
 loop :: Context ()
 loop = do
-    line  <- (liftIO getLine)
+    line  <- liftIO getLine
     parse line
     state <- get
-    debug $ putStrLn $ "GameState: " ++ (show $ state)
+    debug $ putStrLn $ "GameState: " ++ (show state)
     liftIO (hFlush stdout)
     eof   <- liftIO isEOF
     unless eof loop
@@ -216,7 +216,7 @@ main = do
 getMyBot :: Context Player
 getMyBot = do
     st <- get
-    return $ head [pl | pl <- (players st), (playerName pl) == (myBot st)]
+    return $ head [pl | pl <- players st, playerName pl == myBot st]
 
 formatMoves :: [Move] -> String
 formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next)

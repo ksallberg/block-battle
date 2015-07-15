@@ -23,7 +23,8 @@ handleAction :: String -> Context()
 To access the IO monad from the StateT monad transformer, use:
 <br/>
 ```haskell
-liftIO $ putStrLn "left,left,down,right"
+liftIO $ putStrLn "some IO"
+xyz <- liftIO someReturningIO
 ```
 <br/>
 <br/>
