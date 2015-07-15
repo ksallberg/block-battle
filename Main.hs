@@ -1,3 +1,6 @@
+-- TODO: * finish parsing
+--       * use matrix to represent field?
+
 module Main where
 
 import Control.Monad
@@ -65,6 +68,7 @@ parse :: String -> Context ()
 parse str | head (words str) == "action"   = handleAction   str
           | head (words str) == "update"   = handleUpdate   (tail $ words str)
           | head (words str) == "settings" = handleSettings (tail $ words str)
+          | otherwise = error "Unsupported command!"
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
@@ -80,7 +84,6 @@ handleAction str = do
 -- PARSING --
 -------------
 
--- TODO: implement complete parsing of admin commands
 handleSettings :: [String] -> Context ()
 handleSettings ["timebank", time] = do
     debug $ putStrLn $ "Set timebank to: " ++ time
@@ -89,6 +92,7 @@ handleSettings ["timebank", time] = do
 handleSettings ["time_per_move", time] = do
     state <- get
     put $ state{ timePerMove = (read time :: Int) }
+-- TODO: implement
 handleSettings ["player_names", names] = do
     state <- get
     return ()
@@ -105,7 +109,6 @@ handleSettings _ = error "Unsupported setting received!"
 
 {-| Update the game state with configurations received
     with the update  flag from the admin script -}
--- TODO: implement complete parsing of admin commands
 handleUpdate :: [String] -> Context ()
 handleUpdate ["game", "round", roundVal] = do
     state <- get
@@ -118,14 +121,18 @@ handleUpdate ["game", "next_piece_type", piece] = do
     put $ state{ nextPieceType = (read piece :: Block) }
 handleUpdate ["game", "this_piece_position", pos] = do
     state <- get
-    put $ state{ thisPiecePosition =
-                     (takeWhile (/=',') pos, tail $ dropWhile (/=',') pos) }
+    let x = read (takeWhile (/=',') pos) :: Int
+        y = read (tail (dropWhile (/=',') pos)) :: Int
+    put $ state{ thisPiecePosition = (x, y) }
+-- TODO: implement
 handleUpdate [playername, "row_points", rowpoints] = do
     state <- get
     return ()
+-- TODO: implement
 handleUpdate [playername, "combo", combo] = do
     state <- get
     return ()
+-- TODO: implement
 handleUpdate [playername, "field", field] = do
     state <- get
     return ()
