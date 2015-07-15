@@ -20,7 +20,7 @@ data Block =
     Z  deriving (Show, Read, Eq, Ord)
 
 data Player = Player {
-    playerName :: Int,
+    playerName :: String,
     rowPoints  :: Int,
     combo      :: Int,
     field      :: [[Int]]
@@ -63,34 +63,76 @@ modstep = do
 
 parse :: String -> Context ()
 parse str | head (words str) == "action"   = handleAction   str
-          | head (words str) == "update"   = handleUpdate   str
-          | head (words str) == "settings" = handleSettings str
+          | head (words str) == "update"   = handleUpdate   (tail $ words str)
+          | head (words str) == "settings" = handleSettings (tail $ words str)
 
 {-| Handle the action given by the admin script!
-    Make use of already set game state.
--}
+    Make use of already set game state. -}
 handleAction :: String -> Context()
 handleAction str = do
     liftIO $ putStrLn "left,left,down,right"
 
-handleSettings :: String -> Context ()
-handleSettings str = return ()
+{-| Update the game state with configurations received
+    with the update  flag from the admin script -}
+-- TODO: implement complete parsing of admin commands
+handleUpdate :: [String] -> Context ()
+handleUpdate ["game", "round", round] = do
+    state <- get
+    return ()
+handleUpdate ["game", "this_piece_type", piece] = do
+    state <- get
+    return ()
+handleUpdate ["game", "next_piece_type", piece] = do
+    state <- get
+    return ()
+handleUpdate ["game", "this_piece_position", pos]   = do
+    state <- get
+    return ()
+handleUpdate [playername, "row_points"] = do
+    state <- get
+    return ()
+handleUpdate [playername, "combo"] = do
+    state <- get
+    return ()
+handleUpdate [playername, "field"] = do
+    state <- get
+    return ()
+handleUpdate _ = error "Unsupported update received!"
 
-handleUpdate :: String -> Context ()
-handleUpdate str = return ()
+-- TODO: implement complete parsing of admin commands
+handleSettings :: [String] -> Context ()
+handleSettings ["timebank", time] = do
+    debug (putStrLn $ "Set timebank to: " ++ time)
+    state <- get
+    put $ state{ timebank = (read time :: Int) }
+handleSettings ["time_per_move", time] = do
+    state <- get
+    return ()
+handleSettings ["player_names", names] = do
+    state <- get
+    return ()
+handleSettings ["your_bot", botname] = do
+    state <- get
+    return ()
+handleSettings ["field_width", width] = do
+    state <- get
+    return ()
+handleSettings ["field_height", height] = do
+    state <- get
+    return ()
+handleSettings _ = error "Unsupported setting received!"
 
 loop :: Context ()
 loop = do
-    state <- get
     line  <- (liftIO getLine)
     parse line
+    state <- get
+    debug $ putStrLn $ "timebank is: " ++ (show $ timebank state)
     liftIO (hFlush stdout)
     eof <- liftIO isEOF
-    debug $ putStrLn $ show $ timebank state
-    modstep
     unless eof loop
 
 main :: IO ()
 main = do
     hSetBuffering stdin LineBuffering
-    evalStateT loop $ GameState{}
+    evalStateT loop $ GameState{timebank=0}
