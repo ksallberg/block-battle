@@ -1,0 +1,58 @@
+This is a simple test trace, made to see whether the parsing
+works and fields are set.
+
+> settings timebank 10000
+Set timebank to: 10000
+GameState: GameState {timebank = 10000, timePerMove = 0, players = [], myBot = "not set", fieldHeight = 0, fieldWidth = 0, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> settings time_per_move 500
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [], myBot = "not set", fieldHeight = 0, fieldWidth = 0, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+>settings player_names player1,player2
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "not set", fieldHeight = 0, fieldWidth = 0, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> settings your_bot player1
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 0, fieldWidth = 0, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> settings field_height 20
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 0, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> settings field_width 10
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 0, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> update game round 1
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = I, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> update game this_piece_type O
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = O, thisPiecePosition = (-1,5)}
+
+> update game next_piece_type I
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (-1,5)}
+
+> update game this_piece_position 4,-1
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player1 row_points 0
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 0, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player1 row_points 5
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 0, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player1 combo 9
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player1 field 0,0,0,0,1,1,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},Player {playerName = "player2", rowPoints = 0, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player2 row_points 7
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},Player {playerName = "player2", rowPoints = 7, combo = 0, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player2 combo 56
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},Player {playerName = "player2", rowPoints = 7, combo = 56, field = [[]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> update player2 field 0,0,0,0,1,1,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},Player {playerName = "player2", rowPoints = 7, combo = 56, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}
+
+> action moves 10000
+left,left,down,right,turnright (output from the bot)
+GameState: GameState {timebank = 10000, timePerMove = 500, players = [Player {playerName = "player1", rowPoints = 5, combo = 9, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},Player {playerName = "player2", rowPoints = 7, combo = 56, field = [[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]}], myBot = "player1", fieldHeight = 20, fieldWidth = 10, gameRound = 1, thisPieceType = O, nextPieceType = I, thisPiecePosition = (4,-1)}

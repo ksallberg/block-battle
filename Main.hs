@@ -20,6 +20,24 @@ data Block =
     T |
     Z  deriving (Show, Read, Eq, Ord)
 
+data Move =
+    Down      |
+    StepLeft  |
+    StepRight |
+    TurnLeft  |
+    TurnRight |
+    Drop      |
+    NoMoves
+
+instance Show Move where
+    show Down      = "down"
+    show StepLeft  = "left"
+    show StepRight = "right"
+    show TurnLeft  = "turnleft"
+    show TurnRight = "turnright"
+    show Drop      = "drop"
+    show NoMoves   = "no_moves"
+
 data Player = Player {
     playerName :: String,
     rowPoints  :: Int,
@@ -84,14 +102,15 @@ parse str | head (words str) == "action"   = handleAction   str
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
-handleAction :: String -> Context()
+handleAction :: String -> Context ()
 handleAction str = do
     state    <- get
     myPlayer <- getMyBot -- type Player
     -- Users: you can access the game state here, it is of type GameState
     -- TODO: Some AI functionality
     -- Tell the admin script what to do:
-    liftIO $ putStrLn "left,left,down,right"
+    let myCleverPlan = [StepLeft, StepLeft, Down, StepRight, TurnRight]
+    liftIO $ putStrLn $ formatMoves myCleverPlan
 
 -------------
 -- PARSING --
@@ -176,7 +195,7 @@ loop = do
     state <- get
     debug $ putStrLn $ "GameState: " ++ (show $ state)
     liftIO (hFlush stdout)
-    eof <- liftIO isEOF
+    eof   <- liftIO isEOF
     unless eof loop
 
 main :: IO ()
@@ -198,6 +217,11 @@ getMyBot :: Context Player
 getMyBot = do
     st <- get
     return $ head [pl | pl <- (players st), (playerName pl) == (myBot st)]
+
+formatMoves :: [Move] -> String
+formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next)
+                              ""
+                              xs
 
 splitBy :: Char -> String -> [String]
 splitBy delimiter = foldr f [[]]

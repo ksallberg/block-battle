@@ -1,17 +1,36 @@
 # block-battle
-Haskell starter bot for AI Block Battle (Beta)
+Haskell starter bot for AI Block Battle (Beta), parsing the
+full supported set of outputs from the game engine.
 <br/>
 <br/>
 http://theaigames.com/competitions/ai-block-battle
 <br/>
-Let's create a starter bot (as exists for Java, C#, Scala):
-<br/>
 http://theaigames.com/competitions/ai-block-battle/getting-started
+<br/>
+<br/>
+Set "debug' = True" to enable debug logging
+<br/>
+Example usage:
+```haskell
+debug $ putStrLn $ "message"
+```
+<br/>
+Use "handleAction" as a hook for adding your AI behaviour. In this
+function, use state to access the GameState type that represents
+all information the game engine has provided so far.
+<br/>
+handleAction :: String -> Context()
+To access the IO monad from the StateT monad transformer, use:
+<br/>
+```haskell
+liftIO $ putStrLn "left,left,down,right"
+```
+<br/>
 <br/>
 <br/>
 Implemented as a StateT (easy to incrementally update the game
 state when receiving updates from the admin script) monad with
-IO as inner monad (easier to debug when developing...). A hook
-called handleAction can be extended by users of this starter
-bot, to analyse the parsed game state and respond to actions
-with a list of moves.
+IO as inner monad (easier to debug when developing...).
+<br/>
+<br/>
+URL to the development repo: https://github.com/ksallberg/block-battle
