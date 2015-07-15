@@ -33,7 +33,7 @@ data GameState = GameState {
     myBot             :: Player,
     fieldHeight       :: Int,
     fieldWidth        :: Int,
-    round             :: Int,
+    gameRound         :: Int,
     thisPieceType     :: Block,
     nextPieceType     :: Block,
     thisPiecePosition :: (Int, Int)
@@ -70,44 +70,25 @@ parse str | head (words str) == "action"   = handleAction   str
     Make use of already set game state. -}
 handleAction :: String -> Context()
 handleAction str = do
+    state <- get
+    -- Users: you can access the game state here, it is of type GameState
+    -- TODO: Some AI functionality
+    -- Tell the admin script what to do:
     liftIO $ putStrLn "left,left,down,right"
 
-{-| Update the game state with configurations received
-    with the update  flag from the admin script -}
--- TODO: implement complete parsing of admin commands
-handleUpdate :: [String] -> Context ()
-handleUpdate ["game", "round", round] = do
-    state <- get
-    return ()
-handleUpdate ["game", "this_piece_type", piece] = do
-    state <- get
-    return ()
-handleUpdate ["game", "next_piece_type", piece] = do
-    state <- get
-    return ()
-handleUpdate ["game", "this_piece_position", pos]   = do
-    state <- get
-    return ()
-handleUpdate [playername, "row_points"] = do
-    state <- get
-    return ()
-handleUpdate [playername, "combo"] = do
-    state <- get
-    return ()
-handleUpdate [playername, "field"] = do
-    state <- get
-    return ()
-handleUpdate _ = error "Unsupported update received!"
+-------------
+-- PARSING --
+-------------
 
 -- TODO: implement complete parsing of admin commands
 handleSettings :: [String] -> Context ()
 handleSettings ["timebank", time] = do
-    debug (putStrLn $ "Set timebank to: " ++ time)
+    debug $ putStrLn $ "Set timebank to: " ++ time
     state <- get
     put $ state{ timebank = (read time :: Int) }
 handleSettings ["time_per_move", time] = do
     state <- get
-    return ()
+    put $ state{ timePerMove = (read time :: Int) }
 handleSettings ["player_names", names] = do
     state <- get
     return ()
@@ -116,11 +97,39 @@ handleSettings ["your_bot", botname] = do
     return ()
 handleSettings ["field_width", width] = do
     state <- get
-    return ()
+    put $ state{ fieldWidth = (read width :: Int) }
 handleSettings ["field_height", height] = do
     state <- get
-    return ()
+    put $ state{ fieldHeight = (read height :: Int) }
 handleSettings _ = error "Unsupported setting received!"
+
+{-| Update the game state with configurations received
+    with the update  flag from the admin script -}
+-- TODO: implement complete parsing of admin commands
+handleUpdate :: [String] -> Context ()
+handleUpdate ["game", "round", roundVal] = do
+    state <- get
+    put $ state{ gameRound = (read roundVal :: Int) }
+handleUpdate ["game", "this_piece_type", piece] = do
+    state <- get
+    put $ state{ thisPieceType = (read piece :: Block) }
+handleUpdate ["game", "next_piece_type", piece] = do
+    state <- get
+    put $ state{ nextPieceType = (read piece :: Block) }
+handleUpdate ["game", "this_piece_position", pos]   = do
+    let [x, y] = [10, 4]-- TODO: splitOn "," pos
+    state <- get
+    put $ state{ thisPiecePosition = (x, y) }
+handleUpdate [playername, "row_points", rowpoints] = do
+    state <- get
+    return ()
+handleUpdate [playername, "combo", combo] = do
+    state <- get
+    return ()
+handleUpdate [playername, "field", field] = do
+    state <- get
+    return ()
+handleUpdate _ = error "Unsupported update received!"
 
 loop :: Context ()
 loop = do
