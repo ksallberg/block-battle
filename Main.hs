@@ -92,10 +92,17 @@ handleSettings ["timebank", time] = do
 handleSettings ["time_per_move", time] = do
     state <- get
     put $ state{ timePerMove = (read time :: Int) }
--- TODO: implement
 handleSettings ["player_names", names] = do
     state <- get
-    return ()
+    let namesLs = splitBy ',' names
+        playersLs = foldl (\acc name -> acc ++ [Player{playerName = name,
+                                                       rowPoints  = 0,
+                                                       combo      = 0,
+                                                       field      = [[]]
+                                                      }])
+                          []
+                          namesLs
+    put $ state{ players = playersLs }
 handleSettings ["your_bot", botname] = do
     state <- get
     put $ state{ myBot = botname }
@@ -121,9 +128,8 @@ handleUpdate ["game", "next_piece_type", piece] = do
     put $ state{ nextPieceType = (read piece :: Block) }
 handleUpdate ["game", "this_piece_position", pos] = do
     state <- get
-    let x = read (takeWhile (/=',') pos) :: Int
-        y = read (tail (dropWhile (/=',') pos)) :: Int
-    put $ state{ thisPiecePosition = (x, y) }
+    let [x, y] = splitBy ',' pos
+    put $ state{ thisPiecePosition = (read x :: Int, read y :: Int) }
 -- TODO: implement
 handleUpdate [playername, "row_points", rowpoints] = do
     state <- get
@@ -152,3 +158,8 @@ main :: IO ()
 main = do
     hSetBuffering stdin LineBuffering
     evalStateT loop $ GameState{timebank=0}
+
+-- helper functions
+splitBy delimiter = foldr f [[]]
+    where f c l@(x:xs) | c == delimiter = []:l
+                       | otherwise = (c:x):xs
