@@ -1,6 +1,3 @@
--- TODO: * finish parsing
---       * use matrix to represent field?
-
 module Main where
 
 import Control.Monad
@@ -12,6 +9,7 @@ import System.IO
     allowing usage of the inner IO moand.
 -}
 type Context = StateT GameState IO
+type Field   = [[Int]]
 
 data Block =
     I |
@@ -26,7 +24,7 @@ data Player = Player {
     playerName :: String,
     rowPoints  :: Int,
     combo      :: Int,
-    field      :: [[Int]]
+    field      :: Field
 }
 
 data GameState = GameState {
@@ -49,20 +47,34 @@ debug' = False
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
 
-getBlock :: Block -> [[Int]]
-getBlock I = [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]]
-getBlock J = [[1,0,0], [1,1,1], [0,0,0]]
-getBlock L = [[0,0,1], [1,1,1], [0,0,0]]
-getBlock O = take 2 $ repeat [1,1]
-getBlock S = [[0,1,1], [1,1,0], [0,0,0]]
-getBlock T = [[0,1,0], [1,1,1], [0,0,0]]
-getBlock Z = [[1,1,0], [0,1,1], [0,0,0]]
+getBlock :: Block -> Field
+getBlock I = [[0,0,0,0],
+              [1,1,1,1],
+              [0,0,0,0],
+              [0,0,0,0]]
 
-modstep :: Context ()
-modstep = do
-    lastVal <- get
-    put $ lastVal{ timebank = 10000 }
-    return ()
+getBlock J = [[1,0,0],
+              [1,1,1],
+              [0,0,0]]
+
+getBlock L = [[0,0,1],
+              [1,1,1],
+              [0,0,0]]
+
+getBlock O = [[1,1],
+              [1,1]]
+
+getBlock S = [[0,1,1],
+              [1,1,0],
+              [0,0,0]]
+
+getBlock T = [[0,1,0],
+              [1,1,1],
+              [0,0,0]]
+
+getBlock Z = [[1,1,0],
+              [0,1,1],
+              [0,0,0]]
 
 parse :: String -> Context ()
 parse str | head (words str) == "action"   = handleAction   str
@@ -74,7 +86,8 @@ parse str | head (words str) == "action"   = handleAction   str
     Make use of already set game state. -}
 handleAction :: String -> Context()
 handleAction str = do
-    state <- get
+    state    <- get
+    myPlayer <- getMyBot -- type Player
     -- Users: you can access the game state here, it is of type GameState
     -- TODO: Some AI functionality
     -- Tell the admin script what to do:
@@ -130,18 +143,29 @@ handleUpdate ["game", "this_piece_position", pos] = do
     state <- get
     let [x, y] = splitBy ',' pos
     put $ state{ thisPiecePosition = (read x :: Int, read y :: Int) }
--- TODO: implement
-handleUpdate [playername, "row_points", rowpoints] = do
+handleUpdate [playern, "row_points", rowPointsVal] = do
     state <- get
-    return ()
--- TODO: implement
-handleUpdate [playername, "combo", combo] = do
+    let updatePls = [case (playerName pl) of
+                         playern -> pl{rowPoints = read rowPointsVal :: Int}
+                         _       -> pl
+                     | pl <- players state]
+    put $ state{ players = updatePls }
+handleUpdate [playern, "combo", comboVal] = do
     state <- get
-    return ()
--- TODO: implement
-handleUpdate [playername, "field", field] = do
+    let updatePls = [case (playerName pl) of
+                         playern -> pl{combo = read comboVal :: Int}
+                         _       -> pl
+                     | pl <- players state]
+    put $ state{ players = updatePls }
+handleUpdate [playern, "field", fieldVal] = do
     state <- get
-    return ()
+    let fieldParts = splitBy ';' fieldVal
+        fieldLs    = [map (\x -> read x :: Int) (splitBy ',' fieldPart)
+                      | fieldPart <- fieldParts]
+        updatePls = [case (playerName pl) of
+                        playern -> pl{field = fieldLs}
+                     | pl <- players state]
+    put $ state{ players = updatePls }
 handleUpdate _ = error "Unsupported update received!"
 
 loop :: Context ()
@@ -157,9 +181,15 @@ loop = do
 main :: IO ()
 main = do
     hSetBuffering stdin LineBuffering
-    evalStateT loop $ GameState{timebank=0}
+    evalStateT loop $ GameState{timebank = 0}
 
 -- helper functions
+getMyBot :: Context Player
+getMyBot = do
+    st <- get
+    return $ head [pl | pl <- (players st), (playerName pl) == (myBot st)]
+
+splitBy :: Char -> String -> [String]
 splitBy delimiter = foldr f [[]]
     where f c l@(x:xs) | c == delimiter = []:l
                        | otherwise = (c:x):xs
