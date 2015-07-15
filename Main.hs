@@ -60,7 +60,7 @@ data GameState = GameState {
 
 -- crude debugging flag
 debug' :: Bool
-debug' = False
+debug' = True
 
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
@@ -94,16 +94,16 @@ getBlock Z = [[1,1,0],
               [0,1,1],
               [0,0,0]]
 
-parse :: String -> Context ()
-parse str | head (words str) == "action"   = handleAction   str
-          | head (words str) == "update"   = handleUpdate   (tail $ words str)
-          | head (words str) == "settings" = handleSettings (tail $ words str)
-          | otherwise = error "Unsupported command!"
+parse :: [String] -> Context ()
+parse ["action", move] = handleAction (read move :: Int)
+parse ("update":xs)    = parseUpdate xs
+parse ("settings":xs)  = parseSettings xs
+parse _                = error "Unsupported command!"
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
-handleAction :: String -> Context ()
-handleAction str = do
+handleAction :: Int -> Context ()
+handleAction moves = do
     state    <- get
     myPlayer <- getMyBot -- type Player
     -- Users: you can access the game state here, it is of type GameState
@@ -116,15 +116,15 @@ handleAction str = do
 -- PARSING --
 -------------
 
-handleSettings :: [String] -> Context ()
-handleSettings ["timebank", time] = do
+parseSettings :: [String] -> Context ()
+parseSettings ["timebank", time] = do
     debug $ putStrLn $ "Set timebank to: " ++ time
     state <- get
     put $ state{ timebank = (read time :: Int) }
-handleSettings ["time_per_move", time] = do
+parseSettings ["time_per_move", time] = do
     state <- get
     put $ state{ timePerMove = (read time :: Int) }
-handleSettings ["player_names", names] = do
+parseSettings ["player_names", names] = do
     state <- get
     let namesLs = splitBy ',' names
         playersLs = foldl (\acc name -> acc ++ [Player{playerName = name,
@@ -135,48 +135,48 @@ handleSettings ["player_names", names] = do
                           []
                           namesLs
     put $ state{ players = playersLs }
-handleSettings ["your_bot", botname] = do
+parseSettings ["your_bot", botname] = do
     state <- get
     put $ state{ myBot = botname }
-handleSettings ["field_width", width] = do
+parseSettings ["field_width", width] = do
     state <- get
     put $ state{ fieldWidth = (read width :: Int) }
-handleSettings ["field_height", height] = do
+parseSettings ["field_height", height] = do
     state <- get
     put $ state{ fieldHeight = (read height :: Int) }
-handleSettings _ = error "Unsupported setting received!"
+parseSettings _ = error "Unsupported setting received!"
 
 {-| Update the game state with configurations received
     with the update  flag from the admin script -}
-handleUpdate :: [String] -> Context ()
-handleUpdate ["game", "round", roundVal] = do
+parseUpdate :: [String] -> Context ()
+parseUpdate ["game", "round", roundVal] = do
     state <- get
     put $ state{ gameRound = (read roundVal :: Int) }
-handleUpdate ["game", "this_piece_type", piece] = do
+parseUpdate ["game", "this_piece_type", piece] = do
     state <- get
     put $ state{ thisPieceType = (read piece :: Block) }
-handleUpdate ["game", "next_piece_type", piece] = do
+parseUpdate ["game", "next_piece_type", piece] = do
     state <- get
     put $ state{ nextPieceType = (read piece :: Block) }
-handleUpdate ["game", "this_piece_position", pos] = do
+parseUpdate ["game", "this_piece_position", pos] = do
     state <- get
     let [x, y] = splitBy ',' pos
     put $ state{ thisPiecePosition = (read x :: Int, read y :: Int) }
-handleUpdate [playern, "row_points", rowPointsVal] = do
+parseUpdate [playern, "row_points", rowPointsVal] = do
     state <- get
     let updatePls = [case playerName pl == playern of
                          True  -> pl{rowPoints = read rowPointsVal :: Int}
                          False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
-handleUpdate [playern, "combo", comboVal] = do
+parseUpdate [playern, "combo", comboVal] = do
     state <- get
     let updatePls = [case playerName pl == playern of
                          True  -> pl{combo = read comboVal :: Int}
                          False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
-handleUpdate [playern, "field", fieldVal] = do
+parseUpdate [playern, "field", fieldVal] = do
     state <- get
     let fieldParts = splitBy ';' fieldVal
         fieldLs    = [map (\x -> read x :: Int) (splitBy ',' fieldPart)
@@ -186,14 +186,14 @@ handleUpdate [playern, "field", fieldVal] = do
                         False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
-handleUpdate _ = error "Unsupported update received!"
+parseUpdate _ = error "Unsupported update received!"
 
 loop :: Context ()
 loop = do
     line  <- liftIO getLine
-    parse line
+    parse (words line)
     state <- get
-    debug $ putStrLn $ "GameState: " ++ (show state)
+    debug $ putStrLn $ "GameState: " ++ show state
     liftIO (hFlush stdout)
     eof   <- liftIO isEOF
     unless eof loop
@@ -219,9 +219,7 @@ getMyBot = do
     return $ head [pl | pl <- players st, playerName pl == myBot st]
 
 formatMoves :: [Move] -> String
-formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next)
-                              ""
-                              xs
+formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next) "" xs
 
 splitBy :: Char -> String -> [String]
 splitBy delimiter = foldr f [[]]
