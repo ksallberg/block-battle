@@ -25,7 +25,7 @@ data Player = Player {
     rowPoints  :: Int,
     combo      :: Int,
     field      :: Field
-}
+} deriving Show
 
 data GameState = GameState {
     timebank          :: Int,
@@ -38,7 +38,7 @@ data GameState = GameState {
     thisPieceType     :: Block,
     nextPieceType     :: Block,
     thisPiecePosition :: (Int, Int)
-}
+} deriving Show
 
 -- crude debugging flag
 debug' :: Bool
@@ -145,16 +145,16 @@ handleUpdate ["game", "this_piece_position", pos] = do
     put $ state{ thisPiecePosition = (read x :: Int, read y :: Int) }
 handleUpdate [playern, "row_points", rowPointsVal] = do
     state <- get
-    let updatePls = [case (playerName pl) of
-                         playern -> pl{rowPoints = read rowPointsVal :: Int}
-                         _       -> pl
+    let updatePls = [case (playerName pl) == playern of
+                         True  -> pl{rowPoints = read rowPointsVal :: Int}
+                         False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
 handleUpdate [playern, "combo", comboVal] = do
     state <- get
-    let updatePls = [case (playerName pl) of
-                         playern -> pl{combo = read comboVal :: Int}
-                         _       -> pl
+    let updatePls = [case (playerName pl) == playern of
+                         True  -> pl{combo = read comboVal :: Int}
+                         False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
 handleUpdate [playern, "field", fieldVal] = do
@@ -162,8 +162,9 @@ handleUpdate [playern, "field", fieldVal] = do
     let fieldParts = splitBy ';' fieldVal
         fieldLs    = [map (\x -> read x :: Int) (splitBy ',' fieldPart)
                       | fieldPart <- fieldParts]
-        updatePls = [case (playerName pl) of
-                        playern -> pl{field = fieldLs}
+        updatePls = [case (playerName pl) == playern of
+                        True  -> pl{field = fieldLs}
+                        False -> pl
                      | pl <- players state]
     put $ state{ players = updatePls }
 handleUpdate _ = error "Unsupported update received!"
@@ -173,7 +174,7 @@ loop = do
     line  <- (liftIO getLine)
     parse line
     state <- get
-    debug $ putStrLn $ "timebank is: " ++ (show $ timebank state)
+    debug $ putStrLn $ "GameState: " ++ (show $ state)
     liftIO (hFlush stdout)
     eof <- liftIO isEOF
     unless eof loop
@@ -181,7 +182,16 @@ loop = do
 main :: IO ()
 main = do
     hSetBuffering stdin LineBuffering
-    evalStateT loop $ GameState{timebank = 0}
+    evalStateT loop $ GameState{timebank          = 0,
+                                timePerMove       = 0,
+                                players           = [],
+                                myBot             = "not set",
+                                fieldHeight       = 0,
+                                fieldWidth        = 0,
+                                gameRound         = 0,
+                                thisPieceType     = I,
+                                nextPieceType     = O,
+                                thisPiecePosition = (-1, 5)}
 
 -- helper functions
 getMyBot :: Context Player
