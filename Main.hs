@@ -95,7 +95,7 @@ getBlock Z = [[1,1,0],
               [0,0,0]]
 
 parse :: [String] -> Context ()
-parse ["action", move] = handleAction (read move :: Int)
+parse ["action", "moves", move] = handleAction (read move :: Int)
 parse ("update":xs)    = parseUpdate xs
 parse ("settings":xs)  = parseSettings xs
 parse _                = error "Unsupported command!"
