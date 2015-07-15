@@ -1,5 +1,5 @@
 # block-battle
-Haskell starter bot for AI Block Battle (Beta), parsing the
+Haskell starter bot (random moves) for AI Block Battle (Beta), parsing the
 full supported set of outputs from the game engine.
 <br/>
 <br/>

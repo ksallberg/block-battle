@@ -36,6 +36,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Lazy
 import System.IO
+import System.Random
 
 {-| A Context is a StateT wrapper around the game's state,
     allowing usage of the inner IO moand.
@@ -136,12 +137,17 @@ parse _                = error "Unsupported command!"
     Make use of already set game state. -}
 handleAction :: Int -> Context ()
 handleAction moves = do
+    let allMoves = [StepLeft, StepLeft, Down, StepRight, TurnRight]
     state    <- get
     myPlayer <- getMyBot -- type Player
+    gen      <- liftIO getStdGen
+    amount   <- liftIO $ randomRIO (3::Int,10::Int)
+    indices  <- sequence [liftIO $ randomRIO (0::Int,4::Int)
+                          | x <- [0..amount]]
     -- Users: you can access the game state here, it is of type GameState
     -- TODO: Some AI functionality
     -- Tell the admin script what to do:
-    let myCleverPlan = [StepLeft, StepLeft, Down, StepRight, TurnRight]
+    let myCleverPlan = [allMoves !! ind | ind <- indices]
     liftIO $ putStrLn $ formatMoves myCleverPlan
 
 -------------
