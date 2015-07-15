@@ -60,7 +60,7 @@ data GameState = GameState {
 
 -- crude debugging flag
 debug' :: Bool
-debug' = True
+debug' = False
 
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
