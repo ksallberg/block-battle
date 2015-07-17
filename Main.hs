@@ -32,10 +32,10 @@ POSSIBILITY OF SUCH DAMAGE.
 -}
 module Main where
 
+import Block
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Lazy
-import Data.Matrix
 import System.IO
 import System.Random
 
@@ -43,16 +43,6 @@ import System.Random
     allowing usage of the inner IO moand.
 -}
 type Context = StateT GameState IO
-type Field   = [[Int]]
-
-data Block =
-    I |
-    J |
-    L |
-    O |
-    S |
-    T |
-    Z  deriving (Show, Read, Eq, Ord)
 
 data Move =
     Down      |
@@ -98,35 +88,6 @@ debug' = False
 
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
-
-getBlock :: Block -> Field
-getBlock I = [[0,0,0,0],
-              [1,1,1,1],
-              [0,0,0,0],
-              [0,0,0,0]]
-
-getBlock J = [[1,0,0],
-              [1,1,1],
-              [0,0,0]]
-
-getBlock L = [[0,0,1],
-              [1,1,1],
-              [0,0,0]]
-
-getBlock O = [[1,1],
-              [1,1]]
-
-getBlock S = [[0,1,1],
-              [1,1,0],
-              [0,0,0]]
-
-getBlock T = [[0,1,0],
-              [1,1,1],
-              [0,0,0]]
-
-getBlock Z = [[1,1,0],
-              [0,1,1],
-              [0,0,0]]
 
 parse :: [String] -> Context ()
 parse ["action", "moves", move] = handleAction (read move :: Int)
