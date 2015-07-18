@@ -1,16 +1,20 @@
 module Block (Field,
+              Row,
               Block (..),
               inverseRows,
               inverseCols,
               flipLeft,
               flipRight,
-              getBlock
+              getBlock,
+              pretty,
+              prettys
              ) where
 
 import Control.Monad
 import Data.List
 
-type Field = [[Int]]
+type Field = [Row]
+type Row   = [Int]
 
 data Block =
     I |
@@ -68,6 +72,10 @@ flipRight S f = transpose f
 flipRight Z f = transpose f
 flipRight x f = (transpose . inverseCols) f
 
+{-| Add block at x,y in field by addition -}
+addAt :: Field -> (Int, Int) -> Field -> Field
+addAt field (x, y) block = undefined
+
 -- test/debug
 
 pretty :: Field -> IO ()
@@ -89,3 +97,25 @@ flipTest b f = [first, second, third, fourth, fifth]
           third  = f b second
           fourth = f b third
           fifth  = f b fourth
+
+testField :: Field
+testField = [[0,0,0,1,1,1,1,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0]]

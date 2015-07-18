@@ -99,6 +99,7 @@ p2p (x1, y1) (x2, y2) = xPath ++ [Down | _ <- [1..yDelta]]
 
 pathToEmpty :: Field -> (Int, Int) -> Block -> [Move]
 pathToEmpty f (x, y) b = p2p (x, y) (5,18)
+     where investigate = reverse $ take 2 (reverse f)
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
@@ -216,7 +217,7 @@ main = do
                                 gameRound         = 0,
                                 thisPieceType     = I,
                                 nextPieceType     = O,
-                                thisPiecePosition = (-1, 5)}
+                                thisPiecePosition = (3, -1)}
 
 -- helper functions
 getMyBot :: Context Player
