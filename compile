@@ -1,4 +1,4 @@
 #!/bin/bash
 
 rm -f blocks.zip
-zip blocks.zip Main.hs
+zip blocks.zip Main.hs Block.hs

@@ -89,32 +89,38 @@ debug' = False
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
 
-parse :: [String] -> Context ()
-parse ["action", "moves", move] = handleAction (read move :: Int)
-parse ("update":xs)    = parseUpdate xs
-parse ("settings":xs)  = parseSettings xs
-parse _                = error "Unsupported command!"
+p2p :: (Int, Int) -> (Int, Int) -> [Move]
+p2p (x1, y1) (x2, y2) = xPath ++ [Down | _ <- [1..yDelta]]
+    where xDelta = x2 - x1
+          xPath  = case xDelta > 0 of
+                            True ->  [StepRight | _ <- [1..xDelta]]
+                            False -> [StepLeft  | _ <- [1..(abs xDelta)]]
+          yDelta = abs $ y2 - y1
+
+pathToEmpty :: Field -> (Int, Int) -> Block -> [Move]
+pathToEmpty f (x, y) b = p2p (x, y) (5,18)
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
 handleAction :: Int -> Context ()
 handleAction moves = do
-    let allMoves = [StepLeft, StepLeft, Down, StepRight, TurnRight]
     state    <- get
     myPlayer <- getMyBot -- type Player
     gen      <- liftIO getStdGen
-    amount   <- liftIO $ randomRIO (3::Int,10::Int)
-    indices  <- sequence [liftIO $ randomRIO (0::Int,4::Int)
-                          | x <- [0..amount]]
-    -- Users: you can access the game state here, it is of type GameState
-    -- TODO: Some AI functionality
-    -- Tell the admin script what to do:
-    let myCleverPlan = [allMoves !! ind | ind <- indices]
-    liftIO $ putStrLn $ formatMoves myCleverPlan
+    let movePlan = pathToEmpty (field myPlayer)
+                               (thisPiecePosition state)
+                               (thisPieceType state)
+    liftIO $ putStrLn $ formatMoves movePlan
 
 -------------
 -- PARSING --
 -------------
+
+parse :: [String] -> Context ()
+parse ["action", "moves", move] = handleAction (read move :: Int)
+parse ("update":xs)             = parseUpdate xs
+parse ("settings":xs)           = parseSettings xs
+parse _                         = error "Unsupported command!"
 
 parseSettings :: [String] -> Context ()
 parseSettings ["timebank", time] = do
