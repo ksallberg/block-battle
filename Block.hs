@@ -3,11 +3,13 @@ module Block (Field,
               Block (..),
               inverseRows,
               inverseCols,
+              insertBlock,
               flipLeft,
               flipRight,
               getBlock,
               pretty,
-              prettys
+              prettys,
+              testField
              ) where
 
 import Control.Monad
@@ -72,9 +74,37 @@ flipRight S f = transpose f
 flipRight Z f = transpose f
 flipRight x f = (transpose . inverseCols) f
 
-{-| Add block at x,y in field by addition -}
-addAt :: Field -> (Int, Int) -> Field -> Field
-addAt field (x, y) block = undefined
+{-| Insert a block starting at a coordinate, in a field. Results in
+    a new field where the block exists. Plus operation is used to merge
+    the block and field. -}
+insertBlock :: Field -> (Int, Int) -> Field -> Field
+insertBlock block (x, y) field =
+    foldl (\field' (coord, val) -> addAt val coord field')
+          field
+          (changeInstructions block (x, y))
+
+{-| Add block at x,y in field by addition. -}
+addAt :: Int -> (Int, Int) -> Field -> Field
+addAt _ _ [] = []
+addAt content (x, 0) (row:rows) = (before ++ [cell + content] ++ after) : rows
+    where before = take x row
+          cell   = head $ drop x row
+          after  = tail $ drop x row
+addAt content (x, y) (row:rows) = row : (addAt content (x, y-1) rows)
+
+{-| The fold operation here results in the type (Int, [((Int, Int), Int)])
+    from that we keep only the list of instructions, this list
+    is a coordinate and a value. This value can be inserted at a coordinate
+    in a field. -}
+changeInstructions :: Field -> (Int, Int) -> [((Int, Int), Int)]
+changeInstructions field (x, y) = snd $
+    foldl (\(yCount, acc) row ->
+              (yCount + 1,
+               acc ++ [((x + xCount, y + yCount), cell)
+                          | (cell, xCount) <- zip row [0..]])
+          )
+          (0, [])
+          field
 
 -- test/debug
 
@@ -97,6 +127,9 @@ flipTest b f = [first, second, third, fourth, fifth]
           third  = f b second
           fourth = f b third
           fifth  = f b fourth
+
+testInsertBlock :: (Int, Int) -> IO ()
+testInsertBlock coord = pretty $ insertBlock (getBlock T) coord testField
 
 testField :: Field
 testField = [[0,0,0,1,1,1,1,0,0,0],
