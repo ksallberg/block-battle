@@ -109,7 +109,7 @@ changeInstructions field (x, y) = snd $
 -- test/debug
 
 pretty :: Field -> IO ()
-pretty f = forM_ f $ \row -> putStrLn (show row)
+pretty f = forM_ f $ \row -> putStrLn $ show row
 
 prettys :: [Field] -> IO ()
 prettys fs = forM_ fs $ \f -> pretty f >> putStrLn "----"

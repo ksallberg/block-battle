@@ -51,7 +51,7 @@ data Move =
     TurnLeft  |
     TurnRight |
     Drop      |
-    NoMoves
+    NoMoves deriving (Eq, Ord)
 
 instance Show Move where
     show Down      = "down"
@@ -99,7 +99,13 @@ p2p (x1, y1) (x2, y2) = xPath ++ [Down | _ <- [1..yDelta]]
 
 pathToEmpty :: Field -> (Int, Int) -> Block -> [Move]
 pathToEmpty f (x, y) b = p2p (x, y) (5,18)
-     where investigate = reverse $ take 2 (reverse f)
+    where investigate = reverse $ take 2 (reverse f)
+
+optimizePath :: [Move] -> [Move]
+optimizePath xs = case xs /= diff of
+                      True  -> diff ++ [Drop]
+                      False -> xs
+    where diff = reverse $ dropWhile (== Down) (reverse xs)
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
