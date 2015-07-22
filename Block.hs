@@ -69,10 +69,20 @@ flipLeft Z f = transpose f
 flipLeft x f = (transpose . inverseRows) f
 
 flipRight :: Block -> Field -> Field
-flipRight I f = transpose f
-flipRight S f = transpose f
-flipRight Z f = transpose f
+flipRight I f = flipLeft I f
+flipRight S f = flipLeft S f
+flipRight Z f = flipLeft Z f
 flipRight x f = (transpose . inverseCols) f
+
+allRotations :: Block -> [Field]
+allRotations I = [getBlock I, flipLeft I (getBlock I)]
+allRotations S = [getBlock S, flipLeft S (getBlock S)]
+allRotations Z = [getBlock Z, flipLeft Z (getBlock Z)]
+allRotations x = [first, second, third, fourth]
+    where first  = getBlock x
+          second = flipLeft x first
+          third  = flipLeft x second
+          fourth = flipLeft x third
 
 {-| Insert a block starting at a coordinate, in a field. Results in
     a new field where the block exists. Plus operation is used to merge
