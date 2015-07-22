@@ -101,11 +101,36 @@ pathToEmpty :: Field -> (Int, Int) -> Block -> [Move]
 pathToEmpty f (x, y) b = p2p (x, y) (5,18)
     where investigate = reverse $ take 2 (reverse f)
 
+getHeight :: Block -> Int
+getHeight I = 4
+getHeight O = 2
+getHeight _ = 3
+
+{-
+    Right now this is the AI functionality, given a block and a field,
+    try to find the best possible location of the block...
+-}
+allPositions :: Int -> Int -> Block -> [(Int, Int)]
+allPositions fieldHeight fieldWidth b = positions
+    where height    = getHeight b
+          maxX      = fieldWidth - height
+          maxY      = fieldHeight - height
+          positions = [(x, y) | y <- [0..(maxY)], x <- [0..(maxX)]]
+
+insertBlockToField :: Block -> Field -> [(Int, Int)] -> [((Int,Int), Field)]
+insertBlockToField b f posLs =
+    [(pos, insertBlock rot pos f) | pos <- posLs, rot <- blockRotations]
+    where blockRotations = allRotations b
+
 optimizePath :: [Move] -> [Move]
 optimizePath xs = case xs /= diff of
                       True  -> diff ++ [Drop]
                       False -> xs
     where diff = reverse $ dropWhile (== Down) (reverse xs)
+
+keepOK :: [((Int, Int), Field)] -> [((Int, Int), Field)]
+keepOK fs = filter rule fs
+    where rule (_, f) = not $ elem 3 (concat f)
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
@@ -114,10 +139,17 @@ handleAction moves = do
     state    <- get
     myPlayer <- getMyBot -- type Player
     gen      <- liftIO getStdGen
-    let movePlan = pathToEmpty (field myPlayer)
-                               (thisPiecePosition state)
-                               (thisPieceType state)
-    liftIO $ putStrLn $ formatMoves movePlan
+    let myField   = clearField (field myPlayer)
+        block     = thisPieceType state
+        positions = allPositions (fieldHeight state)
+                                 (fieldWidth  state)
+                                 block
+        aaa = insertBlockToField block myField positions
+        (finalPos, _) = last $ keepOK aaa
+        movePlan = p2p (thisPiecePosition state) finalPos
+    --error (show aaa)
+--    liftIO $ putStrLn $ "hej: " ++ (show $ last $ keepOK $ aaa)
+    liftIO $ putStrLn $ formatMoves (optimizePath movePlan)
 
 -------------
 -- PARSING --
@@ -139,11 +171,11 @@ parseSettings ["time_per_move", time] = do
     put $ state{ timePerMove = (read time :: Int) }
 parseSettings ["player_names", names] = do
     state <- get
-    let namesLs = splitBy ',' names
+    let namesLs   = splitBy ',' names
         playersLs = foldl (\acc name -> acc ++ [Player{playerName = name,
                                                        rowPoints  = 0,
                                                        combo      = 0,
-                                                       field      = [[]]
+                                                       field      = []
                                                       }])
                           []
                           namesLs
@@ -218,8 +250,8 @@ main = do
                                 timePerMove       = 0,
                                 players           = [],
                                 myBot             = "not set",
-                                fieldHeight       = 0,
-                                fieldWidth        = 0,
+                                fieldHeight       = 20,
+                                fieldWidth        = 10,
                                 gameRound         = 0,
                                 thisPieceType     = I,
                                 nextPieceType     = O,
@@ -229,7 +261,9 @@ main = do
 getMyBot :: Context Player
 getMyBot = do
     st <- get
-    return $ head [pl | pl <- players st, playerName pl == myBot st]
+    case [pl | pl <- players st, playerName pl == myBot st] of
+        []    -> error "Bot not found!"
+        [bot] -> return $ bot
 
 formatMoves :: [Move] -> String
 formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next) "" xs

@@ -7,6 +7,8 @@ module Block (Field,
               flipLeft,
               flipRight,
               getBlock,
+              allRotations,
+              clearField,
               pretty,
               prettys,
               testField
@@ -84,6 +86,11 @@ allRotations x = [first, second, third, fourth]
           third  = flipLeft x second
           fourth = flipLeft x third
 
+clearField :: Field -> Field
+clearField f = [[changeRule r | r <- row] | row <- f]
+    where changeRule 1 = 0
+          changeRule x = x
+
 {-| Insert a block starting at a coordinate, in a field. Results in
     a new field where the block exists. Plus operation is used to merge
     the block and field. -}
@@ -96,11 +103,13 @@ insertBlock block (x, y) field =
 {-| Add block at x,y in field by addition. -}
 addAt :: Int -> (Int, Int) -> Field -> Field
 addAt _ _ [] = []
-addAt content (x, 0) (row:rows) = (before ++ [cell + content] ++ after) : rows
+addAt content (x, 0) (row:rows) = case (drop x row) of
+    [] -> error $ "problem" ++ (show row) ++ ", x: " ++ (show x)
+    _  -> (before ++ [cell + content] ++ after) : rows
     where before = take x row
           cell   = head $ drop x row
           after  = tail $ drop x row
-addAt content (x, y) (row:rows) = row : (addAt content (x, y-1) rows)
+addAt content (x, y) (row:rows) = row : (addAt content (x, y - 1) rows)
 
 {-| The fold operation here results in the type (Int, [((Int, Int), Int)])
     from that we keep only the list of instructions, this list
@@ -160,5 +169,5 @@ testField = [[0,0,0,1,1,1,1,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0]]
+             [0,0,0,0,0,0,0,0,0,2],
+             [0,0,0,0,0,0,0,2,2,2]]
