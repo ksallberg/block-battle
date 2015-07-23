@@ -45,6 +45,7 @@ import System.Random
     allowing usage of the inner IO moand.
 -}
 type Context = StateT GameState IO
+type Pair    = (Int, Int)
 
 data Move =
     StepDown  |
@@ -91,7 +92,7 @@ debug' = False
 debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
 
-p2p :: (Int, Int) -> (Int, Int) -> [Move]
+p2p :: Pair -> Pair -> [Move]
 p2p (x1, y1) (x2, y2) = xPath ++ [StepDown | _ <- [1..yDelta]]
     where xDelta = x2 - x1
           xPath  = case xDelta > 0 of
@@ -112,22 +113,35 @@ getHeight _ = 3
     Right now this is the AI functionality, given a block and a field,
     try to find the best possible location of the block...
 -}
-allPositions :: Int -> Int -> Block -> [(Int, Int)]
+allPositions :: Int -> Int -> Block -> [Pair]
 allPositions fieldHeight fieldWidth b = positions
     where height    = getHeight b
           maxX      = fieldWidth - height
           maxY      = fieldHeight - height
           positions = [(x, y) | x <- [0..(maxX)], y <- [0..(maxY)]]
 
-insertBlockToField :: Block -> Field -> [(Int, Int)] -> [((Int,Int), Field, Int)]
+-- double list concated in order to apply the several alterPos returning pos
+insertBlockToField :: Block -> Field -> [Pair] -> [(Pair, Field, Int)]
 insertBlockToField b f posLs =
-    [(pos, insertBlock rot (alterPos rot pos) f, count)
-        | pos <- posLs, (count, rot) <- blockRotations]
+    concat [[(pos, insertBlock rot pos f, count)] ++
+            [(pos, insertBlock rot o f, count) | o <- (alterPos rot pos)]
+            | pos <- posLs, (count, rot) <- blockRotations]
     where blockRotations = zip [0..] (allRotations b)
 
-alterPos :: Field -> (Int, Int) -> (Int, Int)
-alterPos f (x, y) = (x, y + length emptyBottom)
-    where emptyBottom = takeWhile (\row-> sum row == 0) (reverse f)
+{-|
+    For a position and a rotated block, there might be some different
+    alternative positions that we would like to test. Empty space in the
+    right of the block? Empty space in the left? And empty space at the
+    bottom. These can be used to change the original position so that the
+    resulting position "cuts out" the empty space.
+-}
+alterPos :: Field -> Pair -> [Pair]
+alterPos f (x, y) = [(x, y + length emptyBottom),
+                     (x - length emptyLeft,  y + length emptyBottom),
+                     (x + length emptyRight, y + length emptyBottom)]
+    where emptyBottom = takeWhile (\row -> sum row == 0) (reverse f)
+          emptyRight  = takeWhile (\row -> sum row == 0) (reverse (transpose f))
+          emptyLeft   = takeWhile (\row -> sum row == 0) (transpose f)
 
 optimizePath :: [Move] -> [Move]
 optimizePath xs = case xs /= diff of
