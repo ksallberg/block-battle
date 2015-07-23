@@ -121,8 +121,13 @@ allPositions fieldHeight fieldWidth b = positions
 
 insertBlockToField :: Block -> Field -> [(Int, Int)] -> [((Int,Int), Field, Int)]
 insertBlockToField b f posLs =
-    [(pos, insertBlock rot pos f, count) | pos <- posLs, (count, rot) <- blockRotations]
+    [(pos, insertBlock rot (alterPos rot pos) f, count)
+        | pos <- posLs, (count, rot) <- blockRotations]
     where blockRotations = zip [0..] (allRotations b)
+
+alterPos :: Field -> (Int, Int) -> (Int, Int)
+alterPos f (x, y) = (x, y + length emptyBottom)
+    where emptyBottom = takeWhile (\row-> sum row == 0) (reverse f)
 
 optimizePath :: [Move] -> [Move]
 optimizePath xs = case xs /= diff of
