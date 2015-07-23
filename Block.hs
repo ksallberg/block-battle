@@ -67,14 +67,10 @@ inverseCols x = transpose $ map reverse (transpose x)
 
 flipLeft :: Block -> Field -> Field
 flipLeft I f = transpose f
-flipLeft S f = transpose f
-flipLeft Z f = transpose f
 flipLeft x f = (transpose . inverseRows) f
 
 flipRight :: Block -> Field -> Field
 flipRight I f = flipLeft I f
-flipRight S f = flipLeft S f
-flipRight Z f = flipLeft Z f
 flipRight x f = (transpose . inverseCols) f
 
 allRotations :: Block -> [Field]
