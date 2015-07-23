@@ -124,7 +124,7 @@ allPositions fieldHeight fieldWidth b = positions
 insertBlockToField :: Block -> Field -> [Pair] -> [(Pair, Field, Int)]
 insertBlockToField b f posLs =
     concat [[(pos, insertBlock rot pos f, count)] ++
-            [(pos, insertBlock rot o f, count) | o <- (alterPos rot pos)]
+            [(o, insertBlock rot o f, count) | o <- (alterPos rot pos)]
             | pos <- posLs, (count, rot) <- blockRotations]
     where blockRotations = zip [0..] (allRotations b)
 
@@ -152,6 +152,17 @@ optimizePath xs = case xs /= diff of
 keepOK :: [((Int, Int), Field, Int)] -> [((Int, Int), Field, Int)]
 keepOK fs = filter rule fs
     where rule (_, f, _) = not $ elem 3 (concat f)
+
+doTest :: Pair
+doTest =
+    let block = Z
+        positions = allPositions 20 10 block
+        allFields = keepOK $ insertBlockToField block testField positions
+        weighted  = sortBy (comparing fst) [(fieldScore f, x)
+                                            | x@(pos, f, _count) <- allFields]
+        weightedS = map snd weighted
+        (finalPos, _, count) = last weightedS
+    in finalPos
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}

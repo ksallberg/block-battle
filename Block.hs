@@ -67,14 +67,10 @@ inverseCols x = transpose $ map reverse (transpose x)
 
 flipLeft :: Block -> Field -> Field
 flipLeft I f = transpose f
-flipLeft S f = transpose f
-flipLeft Z f = transpose f
 flipLeft x f = (transpose . inverseRows) f
 
 flipRight :: Block -> Field -> Field
 flipRight I f = flipLeft I f
-flipRight S f = flipLeft S f
-flipRight Z f = flipLeft Z f
 flipRight x f = (transpose . inverseCols) f
 
 allRotations :: Block -> [Field]
@@ -104,9 +100,10 @@ insertBlock block (x, y) field =
 {-| Add block at x,y in field by addition. -}
 addAt :: Int -> (Int, Int) -> Field -> Field
 addAt _ _ [] = []
-addAt content (x, 0) (row:rows) = case (drop x row) of
-    [] -> error $ "problem" ++ (show row) ++ ", x: " ++ (show x)
-    _  -> (before ++ [cell + content] ++ after) : rows
+addAt content (x, 0) (row:rows) =
+    case x >= (length row) || x < 0 of
+        True  -> (row:rows) -- not possible, skip
+        False -> (before ++ [cell + content] ++ after) : rows
     where before = take x row
           cell   = head $ drop x row
           after  = tail $ drop x row
@@ -171,7 +168,7 @@ testField = [[0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,2,2,2,2]]
+             [0,2,2,0,0,0,0,0,0,0],
+             [2,2,2,2,2,0,2,2,2,2],
+             [2,2,2,2,2,2,2,2,2,0],
+             [0,2,2,2,2,2,2,0,2,2]]
