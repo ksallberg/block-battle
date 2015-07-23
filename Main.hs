@@ -36,6 +36,8 @@ import Block
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Lazy
+import Data.List
+import Data.Ord
 import System.IO
 import System.Random
 
@@ -45,7 +47,7 @@ import System.Random
 type Context = StateT GameState IO
 
 data Move =
-    Down      |
+    StepDown  |
     StepLeft  |
     StepRight |
     TurnLeft  |
@@ -54,7 +56,7 @@ data Move =
     NoMoves deriving (Eq, Ord)
 
 instance Show Move where
-    show Down      = "down"
+    show StepDown  = "down"
     show StepLeft  = "left"
     show StepRight = "right"
     show TurnLeft  = "turnleft"
@@ -90,7 +92,7 @@ debug :: IO () -> Context ()
 debug x = when debug' (liftIO x)
 
 p2p :: (Int, Int) -> (Int, Int) -> [Move]
-p2p (x1, y1) (x2, y2) = xPath ++ [Down | _ <- [1..yDelta]]
+p2p (x1, y1) (x2, y2) = xPath ++ [StepDown | _ <- [1..yDelta]]
     where xDelta = x2 - x1
           xPath  = case xDelta > 0 of
                             True ->  [StepRight | _ <- [1..xDelta]]
@@ -115,22 +117,28 @@ allPositions fieldHeight fieldWidth b = positions
     where height    = getHeight b
           maxX      = fieldWidth - height
           maxY      = fieldHeight - height
-          positions = [(x, y) | y <- [0..(maxY)], x <- [0..(maxX)]]
+          positions = [(x, y) | x <- [0..(maxX)], y <- [0..(maxY)]]
 
-insertBlockToField :: Block -> Field -> [(Int, Int)] -> [((Int,Int), Field)]
+insertBlockToField :: Block -> Field -> [(Int, Int)] -> [((Int,Int), Field, Int)]
 insertBlockToField b f posLs =
-    [(pos, insertBlock rot pos f) | pos <- posLs, rot <- blockRotations]
-    where blockRotations = allRotations b
+    [(pos, insertBlock rot pos f, count) | pos <- posLs, (count, rot) <- blockRotations]
+    where blockRotations = zip [0..] (allRotations b)
 
 optimizePath :: [Move] -> [Move]
 optimizePath xs = case xs /= diff of
                       True  -> diff ++ [Drop]
                       False -> xs
-    where diff = reverse $ dropWhile (== Down) (reverse xs)
+    where diff = reverse $ dropWhile (== StepDown) (reverse xs)
 
-keepOK :: [((Int, Int), Field)] -> [((Int, Int), Field)]
+keepOK :: [((Int, Int), Field, Int)] -> [((Int, Int), Field, Int)]
 keepOK fs = filter rule fs
-    where rule (_, f) = not $ elem 3 (concat f)
+    where rule (_, f, _) = not $ elem 3 (concat f)
+
+merge' :: [[a]] -> [a]
+merge' = concat . transpose
+
+merge :: [a] -> [a] -> [a]
+merge l r = merge' [l,r]
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
@@ -144,9 +152,13 @@ handleAction moves = do
         positions = allPositions (fieldHeight state)
                                  (fieldWidth  state)
                                  block
-        aaa = insertBlockToField block myField positions
-        (finalPos, _) = last $ keepOK aaa
-        movePlan = p2p (thisPiecePosition state) finalPos
+        allFields = keepOK $ insertBlockToField block myField positions
+        weighted  = sortBy (comparing fst) [(fieldScore f, x)
+                                            | x@(pos, f, _count) <- allFields]
+        weightedS = map snd weighted
+        (finalPos, _, count) = last weightedS
+        movePlan = merge [TurnLeft | _ <- [1..count]]
+                         (p2p (thisPiecePosition state) finalPos)
     --error (show aaa)
 --    liftIO $ putStrLn $ "hej: " ++ (show $ last $ keepOK $ aaa)
     liftIO $ putStrLn $ formatMoves (optimizePath movePlan)

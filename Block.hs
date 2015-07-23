@@ -11,7 +11,8 @@ module Block (Field,
               clearField,
               pretty,
               prettys,
-              testField
+              testField,
+              fieldScore
              ) where
 
 import Control.Monad
@@ -125,6 +126,9 @@ changeInstructions field (x, y) = snd $
           (0, [])
           field
 
+fieldScore :: Field -> Int
+fieldScore f = sum $ map (\(ls,w) -> sum ls * w) (zip f (map (*100) [1..]))
+
 -- test/debug
 
 pretty :: Field -> IO ()
@@ -151,7 +155,7 @@ testInsertBlock :: (Int, Int) -> IO ()
 testInsertBlock coord = pretty $ insertBlock (getBlock T) coord testField
 
 testField :: Field
-testField = [[0,0,0,1,1,1,1,0,0,0],
+testField = [[0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
@@ -169,5 +173,5 @@ testField = [[0,0,0,1,1,1,1,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,2],
-             [0,0,0,0,0,0,0,2,2,2]]
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,2,2,2,2]]
