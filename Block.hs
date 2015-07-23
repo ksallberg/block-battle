@@ -70,7 +70,7 @@ flipLeft I f = transpose f
 flipLeft x f = (transpose . inverseRows) f
 
 flipRight :: Block -> Field -> Field
-flipRight I f = flipLeft I f
+flipRight I f = transpose f
 flipRight x f = (transpose . inverseCols) f
 
 allRotations :: Block -> [Field]
