@@ -139,12 +139,6 @@ keepOK :: [((Int, Int), Field, Int)] -> [((Int, Int), Field, Int)]
 keepOK fs = filter rule fs
     where rule (_, f, _) = not $ elem 3 (concat f)
 
-merge' :: [[a]] -> [a]
-merge' = concat . transpose
-
-merge :: [a] -> [a] -> [a]
-merge l r = merge' [l,r]
-
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
 handleAction :: Int -> Context ()
@@ -162,8 +156,8 @@ handleAction moves = do
                                             | x@(pos, f, _count) <- allFields]
         weightedS = map snd weighted
         (finalPos, _, count) = last weightedS
-        movePlan = merge [TurnLeft | _ <- [1..count]]
-                         (p2p (thisPiecePosition state) finalPos)
+        movePlan = [TurnLeft | _ <- [1..count]] ++
+                   (p2p (thisPiecePosition state) finalPos)
     --error (show aaa)
 --    liftIO $ putStrLn $ "hej: " ++ (show $ last $ keepOK $ aaa)
     liftIO $ putStrLn $ formatMoves (optimizePath movePlan)
