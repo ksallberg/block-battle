@@ -82,10 +82,11 @@ allRotations x = [first, second, third, fourth]
           second = flipLeft x first
           third  = flipLeft x second
           fourth = flipLeft x third
-
+{-| 3->2: change black row to just be full. 3 messes with keepOK -}
 clearField :: Field -> Field
 clearField f = [[changeRule r | r <- row] | row <- f]
     where changeRule 1 = 0
+          changeRule 3 = 2
           changeRule x = x
 
 {-| Insert a block starting at a coordinate, in a field. Results in
