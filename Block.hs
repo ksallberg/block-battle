@@ -88,7 +88,7 @@ allRotations x = [(first, 0), (second, 1), (third, 2), (fourth, 3)]
           second = flipLeft x first
           third  = flipLeft x second
           fourth = flipLeft x third
-
+{-| 3->2: change black row to just be full. 3 messes with keepOK -}
 clearField :: Field -> Field
 clearField f = [[changeRule r | r <- row] | row <- f]
     where changeRule 1 = 0
