@@ -86,6 +86,7 @@ allRotations x = [first, second, third, fourth]
 clearField :: Field -> Field
 clearField f = [[changeRule r | r <- row] | row <- f]
     where changeRule 1 = 0
+          changeRule 3 = 2 -- don't use 3 as black row, keepOK messes up
           changeRule x = x
 
 {-| Insert a block starting at a coordinate, in a field. Results in
