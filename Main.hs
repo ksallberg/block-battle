@@ -95,7 +95,12 @@ debug x = when debug' (liftIO $ hPutStrLn stderr x)
 
 {-| Get a list of moves required to get from point a to point b-}
 p2p :: Pair -> Pair -> [Move]
-p2p a b = coorToPath (expandCoor a b)
+p2p (x1, y1) (x2, y2) = xPath ++ [StepDown | _ <- [1..yDelta]]
+    where xDelta = x2 - x1
+          xPath  = case xDelta > 0 of
+                            True ->  [StepRight | _ <- [1..xDelta]]
+                            False -> [StepLeft  | _ <- [1..(abs xDelta)]]
+          yDelta = abs $ y2 - y1
 
 expandCoor :: Pair -> Pair -> [Pair]
 expandCoor a@(x1, y1) b = [(x1, y1)] ++ p2p2' a b
