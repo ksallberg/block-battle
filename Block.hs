@@ -132,8 +132,8 @@ fieldScore f = sum $ map (\(row, weight) -> sum row * weight) rowScoreLW
           -- non zero's in the list, the higher score
           -- this effectively gives a higher weight for rows with long
           -- words in them
-          rowScoreLW = [(row, sco + (longestWord row) * 50)
-                        | (row, sco) <- rowScore]
+          rowScoreLW = [(row, weight + (longestWord row) * 500)
+                        | (row, weight) <- rowScore]
 
 {-| Length of the longest word of non zeros -}
 longestWord :: [Int] -> Int
