@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 -}
 module Main where
 
+--import AStar
 import Block
 import Control.Monad
 import Control.Monad.IO.Class
@@ -87,22 +88,30 @@ data GameState = GameState {
 
 -- crude debugging flag
 debug' :: Bool
-debug' = False
+debug' = True
 
-debug :: IO () -> Context ()
-debug x = when debug' (liftIO x)
+debug :: String -> Context ()
+debug x = when debug' (liftIO $ hPutStrLn stderr x)
 
+{-| Get a list of moves required to get from point a to point b-}
 p2p :: Pair -> Pair -> [Move]
-p2p (x1, y1) (x2, y2) = xPath ++ [StepDown | _ <- [1..yDelta]]
-    where xDelta = x2 - x1
-          xPath  = case xDelta > 0 of
-                            True ->  [StepRight | _ <- [1..xDelta]]
-                            False -> [StepLeft  | _ <- [1..(abs xDelta)]]
-          yDelta = abs $ y2 - y1
+p2p a b = coorToPath (expandCoor a b)
 
-pathToEmpty :: Field -> (Int, Int) -> Block -> [Move]
-pathToEmpty f (x, y) b = p2p (x, y) (5,18)
-    where investigate = reverse $ take 2 (reverse f)
+expandCoor :: Pair -> Pair -> [Pair]
+expandCoor a@(x1, y1) b = [(x1, y1)] ++ p2p2' a b
+    where p2p2' :: Pair -> Pair -> [Pair]
+          p2p2' (x1, y1) (x2, y2)
+              | x1 == x2 && y1 == y2 = []
+              | x1 < x2 = [(x1+1,y1)] ++ p2p2' (x1+1,y1) (x2, y2)
+              | x1 > x2 = [(x1-1,y1)] ++ p2p2' (x1-1,y1) (x2, y2)
+              | y1 < y2 = [(x1,y1+1)] ++ p2p2' (x1,y1+1) (x2, y2)
+
+coorToPath :: [Pair] -> [Move]
+coorToPath (p:ps) = p2pLs' p ps
+    where p2pLs' :: Pair -> [Pair] -> [Move]
+          p2pLs' p [] = []
+          p2pLs' p ps = p2p p (head ps) ++ p2pLs' (head ps) (tail ps)
+
 
 getHeight :: Block -> Int
 getHeight I = 4
@@ -121,10 +130,10 @@ allPositions fieldHeight fieldWidth b = positions
           positions = [(x, y) | x <- [0..(maxX)], y <- [0..(maxY)]]
 
 -- double list concated in order to apply the several alterPos returning pos
-insertBlockToField :: Block -> Field -> [Pair] -> [(Pair, Field, Int)]
+insertBlockToField :: Block -> Field -> [Pair] -> [(Pair, Field, Field, Int)]
 insertBlockToField b f posLs =
-    concat [[(pos, insertBlock rot pos f, count)] ++
-            [(o, insertBlock rot o f, count) | o <- (alterPos rot pos)]
+    concat [[(pos, insertBlock rot pos f, rot, count)] ++
+            [(o, insertBlock rot o f, rot, count) | o <- (alterPos rot pos)]
             | pos <- posLs, (count, rot) <- blockRotations]
     where blockRotations = zip [0..] (allRotations b)
 
@@ -149,20 +158,36 @@ optimizePath xs = case xs /= diff of
                       False -> xs
     where diff = reverse $ dropWhile (== StepDown) (reverse xs)
 
-keepOK :: [((Int, Int), Field, Int)] -> [((Int, Int), Field, Int)]
+keepOK :: [(Pair, Field, Field, Int)] -> [(Pair, Field, Field, Int)]
 keepOK fs = filter rule fs
-    where rule (_, f, _) = not $ elem 3 (concat f)
+    where rule (_, f, _, _) = not $ elem 3 (concat f)
 
 doTest :: Pair
 doTest =
     let block = Z
         positions = allPositions 20 10 block
         allFields = keepOK $ insertBlockToField block testField positions
-        weighted  = sortBy (comparing fst) [(fieldScore f, x)
-                                            | x@(pos, f, _count) <- allFields]
+        weighted  = sortBy (comparing fst)
+                           [(fieldScore f, x)
+                            | x@(pos, f, bl, _count) <- allFields]
         weightedS = map snd weighted
-        (finalPos, _, count) = last weightedS
+        (finalPos, _, _, count) = last weightedS
     in finalPos
+
+evalPath :: Pair -> Pair -> Field -> Field -> Bool
+evalPath from to block field = and [not $ elem 3 (concat f) | f <- mapped]
+    where mapped = [insertBlock block p field | p <- (expandCoor from to)]
+
+{-| Given an origin position, find the first possible location that
+    AStar can travel to, and return a list of moves representing the
+    path to that location.
+-}
+findPath :: Pair -> Field -> [(Pair, Field, Field, Int)] -> (Int, [Move])
+findPath _ _ [] = error "no possible moves"
+findPath origin field ((p, f, bl, count):xs) =
+    case (evalPath origin p bl field) of
+        False -> findPath origin field xs
+        True  -> (count, coorToPath (expandCoor origin p))
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
@@ -177,14 +202,15 @@ handleAction moves = do
                                  (fieldWidth  state)
                                  block
         allFields = keepOK $ insertBlockToField block myField positions
-        weighted  = sortBy (comparing fst) [(fieldScore f, x)
-                                            | x@(pos, f, _count) <- allFields]
+        weighted  = sortBy (comparing fst)
+                           [(fieldScore f, x)
+                            | x@(pos, f, b, _count) <- allFields]
         weightedS = map snd weighted
-        (finalPos, _, count) = last weightedS
-        movePlan = [TurnLeft | _ <- [1..count]] ++
-                   (p2p (thisPiecePosition state) finalPos)
-    --error (show aaa)
---    liftIO $ putStrLn $ "hej: " ++ (show $ last $ keepOK $ aaa)
+--        (finalPos, _field, _block, count) = last weightedS
+        (count, pairPath) = findPath (thisPiecePosition state)
+                                     myField
+                                     (reverse weightedS)
+        movePlan  = [TurnLeft | _ <- [1..count]] ++ pairPath
     liftIO $ putStrLn $ formatMoves (optimizePath movePlan)
 
 -------------
@@ -199,7 +225,7 @@ parse _                         = error "Unsupported command!"
 
 parseSettings :: [String] -> Context ()
 parseSettings ["timebank", time] = do
-    debug $ putStrLn $ "Set timebank to: " ++ time
+    debug $ "Set timebank to: " ++ time
     state <- get
     put $ state{ timebank = (read time :: Int) }
 parseSettings ["time_per_move", time] = do
@@ -274,7 +300,6 @@ loop = do
     line  <- liftIO getLine
     parse (words line)
     state <- get
-    debug $ putStrLn $ "GameState: " ++ show state
     liftIO (hFlush stdout)
     eof   <- liftIO isEOF
     unless eof loop
