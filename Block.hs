@@ -13,6 +13,7 @@ module Block (Field,
               prettys,
               testField,
               fieldScore
+--              splitBy
              ) where
 
 import Control.Monad
@@ -125,7 +126,24 @@ changeInstructions field (x, y) = snd $
           field
 
 fieldScore :: Field -> Int
-fieldScore f = sum $ map (\(ls,w) -> sum ls * w) (zip f (map (*100) [1..]))
+fieldScore f = sum $ map (\(row, weight) -> sum row * weight) rowScoreLW
+    where rowScore = (zip f (map (*100) [1..])) :: [([Int], Int)]
+          -- Account for the longest word, the longer word of
+          -- non zero's in the list, the higher score
+          -- this effectively gives a higher weight for rows with long
+          -- words in them
+          rowScoreLW = [(row, sco + (longestWord row) * 50)
+                        | (row, sco) <- rowScore]
+
+{-| Length of the longest word of non zeros -}
+longestWord :: [Int] -> Int
+longestWord row = maximum $ map length $ splitBy 0 row
+
+
+splitBy :: (Eq a) => a -> [a] -> [[a]]
+splitBy delimiter = foldr f [[]]
+    where f c l@(x:xs) | c == delimiter = []:l
+                       | otherwise = (c:x):xs
 
 -- test/debug
 
