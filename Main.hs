@@ -333,8 +333,3 @@ getMyBot = do
 
 formatMoves :: [Move] -> String
 formatMoves xs = tail $ foldl (\acc next -> acc ++ "," ++ show next) "" xs
-
-splitBy :: Char -> String -> [String]
-splitBy delimiter = foldr f [[]]
-    where f c l@(x:xs) | c == delimiter = []:l
-                       | otherwise = (c:x):xs

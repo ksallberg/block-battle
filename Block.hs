@@ -12,8 +12,8 @@ module Block (Field,
               pretty,
               prettys,
               testField,
-              fieldScore
---              splitBy
+              fieldScore,
+              splitBy
              ) where
 
 import Control.Monad
@@ -132,13 +132,17 @@ fieldScore f = sum $ map (\(row, weight) -> sum row * weight) rowScoreLW
           -- non zero's in the list, the higher score
           -- this effectively gives a higher weight for rows with long
           -- words in them
-          rowScoreLW = [(row, weight + (longestWord row) * 500)
+          rowScoreLW = [(row,
+                         weight + (longestWord row) * 500 `div` numberWords row
+                        )
                         | (row, weight) <- rowScore]
 
 {-| Length of the longest word of non zeros -}
 longestWord :: [Int] -> Int
 longestWord row = maximum $ map length $ splitBy 0 row
 
+numberWords :: [Int] -> Int
+numberWords row = max 1 (length (splitBy 0 row))
 
 splitBy :: (Eq a) => a -> [a] -> [[a]]
 splitBy delimiter = foldr f [[]]
