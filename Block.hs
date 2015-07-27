@@ -128,7 +128,7 @@ changeInstructions field (x, y) = snd $
 fieldScore :: Field -> Int
 fieldScore f = sum (map (\(row, weight) -> sum row * weight) fIndex)
                + rowScore + colScore
-    where fIndex = (zip f (map (*1) [1..])) :: [([Int], Int)]
+    where fIndex = (zip f (map (*10) [1..])) :: [([Int], Int)]
           -- Account for the longest word, the longer word of
           -- non zero's in the list, the higher score
           -- this effectively gives a higher weight for rows with long
