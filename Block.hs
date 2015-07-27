@@ -126,16 +126,19 @@ changeInstructions field (x, y) = snd $
           field
 
 fieldScore :: Field -> Int
-fieldScore f = sum $ map (\(row, weight) -> sum row * weight) rowScoreLW
-    where rowScore = (zip f (map (*100) [1..])) :: [([Int], Int)]
+fieldScore f = sum (map (\(row, weight) -> sum row * weight) fIndex)
+               + rowScore + colScore
+    where fIndex = (zip f (map (*1) [1..])) :: [([Int], Int)]
           -- Account for the longest word, the longer word of
           -- non zero's in the list, the higher score
           -- this effectively gives a higher weight for rows with long
           -- words in them
-          rowScoreLW = [(row,
-                         weight + (longestWord row) * 500 `div` numberWords row
-                        )
-                        | (row, weight) <- rowScore]
+          rowScore =
+              sum [longestWord row * 5 `div` numberWords row * 99
+                      | row <- f]
+          colScore =
+              sum [longestWord col * 5 `div` numberWords col * 99
+                      | col <- transpose f]
 
 {-| Length of the longest word of non zeros -}
 longestWord :: [Int] -> Int
