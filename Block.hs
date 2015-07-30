@@ -1,5 +1,6 @@
 module Block (Field,
               Row,
+              Pair,
               Block (..),
               inverseRows,
               inverseCols,
@@ -13,7 +14,10 @@ module Block (Field,
               prettys,
               testField,
               fieldScore,
-              splitBy
+              splitBy,
+              getCell,
+              getCoordsOfField,
+              isGrounded
              ) where
 
 import Control.Monad
@@ -21,6 +25,7 @@ import Data.List
 
 type Field = [Row]
 type Row   = [Int]
+type Pair  = (Int, Int)
 
 data Block =
     I |
@@ -120,15 +125,14 @@ changeInstructions field (x, y) = snd $
     foldl (\(yCount, acc) row ->
               (yCount + 1,
                acc ++ [((x + xCount, y + yCount), cell)
-                          | (cell, xCount) <- zip row [0..]])
-          )
+                       | (cell, xCount) <- zip row [0..]]))
           (0, [])
           field
 
 fieldScore :: Field -> Int
 fieldScore f =
-    weighted - (emptyInRows + emptyInCols)
-    where fIndex      = (zip f (map (*10) [1..])) :: [([Int], Int)]
+    weighted - 400 * (max 1 emptyInRows * max 1 emptyInCols)
+    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
           emptyInRows = sum $ map numberWords f
           emptyInCols = sum $ map numberWords (transpose f)
           weighted    = sum rowValues
@@ -153,6 +157,48 @@ parseField str = let fieldParts = splitBy ';' str
                  in [map (\x -> read x :: Int) (splitBy ',' fieldPart)
                      | fieldPart <- fieldParts]
 
+getCell :: Pair -> Field -> Maybe Int
+getCell (x, y) f | y >= length f        = Nothing
+                 | x >= length (head f) = Nothing
+                 | otherwise            = Just $ (f !! y) !! x
+
+getCoordsOfField :: Field -> [Pair]
+getCoordsOfField f = concat
+    [[(x, y) | x <- [0..(length row)-1], row !! x == 1]
+     | (y, row)  <- zip [0..] f]
+
+--cutBottom :: Field -> Field
+--cutBottom f = reverse $ dropWhile (\row -> sum row == 0) (reverse f)
+
+{-
+    Pick out the bottom line (max y) of the coordinates
+    of a tetris block (representes as a Field), and then
+    look at the positions below these on the game field.
+    The positions below should not all be (Just 0) because
+    then the block is hanging in the air.
+-}
+isGrounded :: (Pair, Field, Field, Int) -> Bool
+isGrounded ((xpos, ypos), f, rot, _amount) =
+    let coords    = [(x + xpos, y + ypos + 1)
+                     | (x, y) <- getCoordsOfField rot]
+        allX      = nub (map fst coords)
+        lowCoords = [(x, maximum (map snd $ filter (\(cx,_) -> cx == x) coords))
+                    | x <- allX]
+        hasGround = [getCell p f | p <- lowCoords]
+ --       blHeight  = length $ cutBottom rot
+    in not $ all (==Just 0) hasGround
+
+--isGrounded' :: (Pair, Field, Field, Int) -> [Maybe Int]
+isGrounded' ((xpos, ypos), f, rot, _amount) =
+    let coords    = [(x + xpos, y + ypos + 1)
+                     | (x, y) <- getCoordsOfField rot]
+        allX      = nub (map fst coords)
+        lowCoords = [(x, maximum (map snd $ filter (\(cx,_) -> cx == x) coords))
+                     | x <- allX]
+        hasGround = [getCell p f | p <- lowCoords]
+--        blHeight  = length $ cutBottom rot
+    in lowCoords
+
 -- test/debug
 
 pretty :: Field -> IO ()
@@ -174,6 +220,13 @@ flipTest b f = [first, second, third, fourth, fifth]
           third  = f b second
           fourth = f b third
           fifth  = f b fourth
+
+testIsGrounded :: Bool
+testIsGrounded = isGrounded ((1,14), testField, getBlock O, 0)
+
+--testIsGrounded' :: [Maybe Int]
+testIsGrounded' = isGrounded' ((1,14), testField, getBlock O, 0)
+
 
 testInsertBlock :: (Int, Int) -> IO ()
 testInsertBlock coord = pretty $ insertBlock (getBlock T) coord testField

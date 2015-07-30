@@ -46,7 +46,6 @@ import System.Random
     allowing usage of the inner IO moand.
 -}
 type Context = StateT GameState IO
-type Pair    = (Int, Int)
 
 data Move =
     StepDown  |
@@ -143,8 +142,8 @@ optimizePath xs = case xs /= diff of
     where diff = reverse $ dropWhile (== StepDown) (reverse xs)
 
 keepOK :: [(Pair, Field, Field, Int)] -> [(Pair, Field, Field, Int)]
-keepOK fs = filter rule fs
-    where rule (_, f, _, _) = not $ elem 3 (concat f)
+keepOK fs = filter isGrounded (filter noClashes fs)
+    where noClashes  (_, f, _, _) = not $ elem 3 (concat f)
 
 evalPath :: Pair -> Pair -> Field -> Field -> Bool
 evalPath from to block field = and [not $ elem 3 (concat f) | f <- mapped]
