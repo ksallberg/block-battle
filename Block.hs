@@ -74,11 +74,11 @@ flipRight :: Block -> Field -> Field
 flipRight I f = flipLeft I f
 flipRight x f = (transpose . inverseCols) f
 
-allRotations :: Block -> [Field]
-allRotations I = [getBlock I, flipLeft I (getBlock I)]
-allRotations S = [getBlock S, flipLeft S (getBlock S)]
-allRotations Z = [getBlock Z, flipLeft Z (getBlock Z)]
-allRotations x = [first, second, third, fourth]
+allRotations :: Block -> [(Field, Int)]
+allRotations I = [(getBlock I, 0), (flipLeft I (getBlock I), 1)]
+allRotations S = [(getBlock S, 0), (flipLeft S (getBlock S), 1)]
+allRotations Z = [(getBlock Z, 0), (flipLeft Z (getBlock Z), 1)]
+allRotations x = [(first, 0), (second, 1), (third, 2), (fourth, 3)]
     where first  = getBlock x
           second = flipLeft x first
           third  = flipLeft x second
@@ -127,12 +127,12 @@ changeInstructions field (x, y) = snd $
 
 fieldScore :: Field -> Int
 fieldScore f =
-    weighted + 20 * completeRows `div` 1 + (10 * emptyInRows ) -- * emptyInCols)
-    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
+    weighted - (emptyInRows + emptyInCols)
+    where fIndex      = (zip f (map (*10) [1..])) :: [([Int], Int)]
           emptyInRows = sum $ map numberWords f
           emptyInCols = sum $ map numberWords (transpose f)
-          weighted    = sum $ map (\(row, weight) -> sum row * weight) fIndex
-          completeRows = length $ filter (==True) (map completeRow f)
+          weighted    = sum rowValues
+          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 {-| Length of the longest word of non zeros -}
 completeRow :: [Int] -> Bool

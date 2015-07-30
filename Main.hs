@@ -117,45 +117,24 @@ coorToPath (p:ps) = p2pLs' p ps
           p2pLs' p [] = []
           p2pLs' p ps = p2p p (head ps) ++ p2pLs' (head ps) (tail ps)
 
-
-getHeight :: Block -> Int
-getHeight I = 4
-getHeight O = 2
-getHeight _ = 3
-
-{-
-    Right now this is the AI functionality, given a block and a field,
-    try to find the best possible location of the block...
--}
-allPositions :: Int -> Int -> Block -> [Pair]
-allPositions fieldHeight fieldWidth b = positions
-    where height    = getHeight b
-          maxX      = fieldWidth - height
-          maxY      = fieldHeight - height
-          positions = [(x, y) | x <- [0..(maxX)], y <- [0..(maxY)]]
+allPositions :: Int -> Int -> Field -> [Pair]
+allPositions fieldHeight fieldWidth f = positions
+    where topSpace    = length $ takeWhile match f
+          bottomSpace = length $ takeWhile match (reverse f)
+          leftSpace   = length $ takeWhile match (transpose f)
+          rightSpace  = length $ takeWhile match ((reverse . transpose) f)
+          minX        = -leftSpace
+          maxX        = fieldWidth + rightSpace
+          minY        = -topSpace
+          maxY        = fieldHeight + bottomSpace
+          positions   = [(x, y) | x <- [minX..maxX], y <- [minY..maxY]]
+          match       = \row -> sum row == 0
 
 -- double list concated in order to apply the several alterPos returning pos
-insertBlockToField :: Block -> Field -> [Pair] -> [(Pair, Field, Field, Int)]
-insertBlockToField b f posLs =
-    concat [[(pos, insertBlock rot pos f, rot, count)] ++
-            [(o, insertBlock rot o f, rot, count) | o <- (alterPos rot pos)]
-            | pos <- posLs, (count, rot) <- blockRotations]
-    where blockRotations = zip [0..] (allRotations b)
-
-{-|
-    For a position and a rotated block, there might be some different
-    alternative positions that we would like to test. Empty space in the
-    right of the block? Empty space in the left? And empty space at the
-    bottom. These can be used to change the original position so that the
-    resulting position "cuts out" the empty space.
--}
-alterPos :: Field -> Pair -> [Pair]
-alterPos f (x, y) = [(x, y + length emptyBottom),
-                     (x - length emptyLeft,  y + length emptyBottom),
-                     (x + length emptyRight, y + length emptyBottom)]
-    where emptyBottom = takeWhile (\row -> sum row == 0) (reverse f)
-          emptyRight  = takeWhile (\row -> sum row == 0) (reverse (transpose f))
-          emptyLeft   = takeWhile (\row -> sum row == 0) (transpose f)
+insertToField :: [(Field, [Pair], Int)] -> Field -> [(Pair, Field, Field, Int)]
+insertToField xs f = concat [ [(p, insertBlock rot p f, rot, rotNum)
+                              | p <- pos]
+                            | (rot, pos, rotNum) <- xs]
 
 optimizePath :: [Move] -> [Move]
 optimizePath xs = case xs /= diff of
@@ -166,18 +145,6 @@ optimizePath xs = case xs /= diff of
 keepOK :: [(Pair, Field, Field, Int)] -> [(Pair, Field, Field, Int)]
 keepOK fs = filter rule fs
     where rule (_, f, _, _) = not $ elem 3 (concat f)
-
-doTest :: Pair
-doTest =
-    let block = Z
-        positions = allPositions 20 10 block
-        allFields = keepOK $ insertBlockToField block testField positions
-        weighted  = sortBy (comparing fst)
-                           [(fieldScore f, x)
-                            | x@(pos, f, bl, _count) <- allFields]
-        weightedS = map snd weighted
-        (finalPos, _, _, count) = last weightedS
-    in finalPos
 
 evalPath :: Pair -> Pair -> Field -> Field -> Bool
 evalPath from to block field = and [not $ elem 3 (concat f) | f <- mapped]
@@ -203,18 +170,18 @@ handleAction moves = do
     gen      <- liftIO getStdGen
     let myField   = clearField (field myPlayer)
         block     = thisPieceType state
-        positions = allPositions (fieldHeight state)
-                                 (fieldWidth  state)
-                                 block
-        allFields = keepOK $ insertBlockToField block myField positions
+        rots = allRotations block :: [(Field, Int)]
+        positions = [(rot,
+                      allPositions (fieldHeight state) (fieldWidth state) rot,
+                      numRot)
+                     | (rot, numRot) <- rots] :: [(Field, [Pair], Int)]
+        allFields = keepOK $ insertToField positions myField
         weighted  = sortBy (comparing fst)
                            [(fieldScore f, x)
                             | x@(pos, f, b, _count) <- allFields]
-        weightedS = map snd weighted
---        (finalPos, _field, _block, count) = last weightedS
         (count, pairPath) = findPath (thisPiecePosition state)
                                      myField
-                                     (reverse weightedS)
+                                     (reverse (map snd weighted))
         movePlan  = [TurnLeft | _ <- [1..count]] ++ pairPath
     liftIO $ putStrLn $ formatMoves (optimizePath movePlan)
 
