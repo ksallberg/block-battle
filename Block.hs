@@ -127,23 +127,21 @@ changeInstructions field (x, y) = snd $
 
 fieldScore :: Field -> Int
 fieldScore f =
-    (weighted + lWord * 500) `div` max 1 (emptyInRows + emptyInCols)
-    where fIndex = (zip f (map (*1000) [1..])) :: [([Int], Int)]
-          -- Account for the longest word, the longer word of
-          -- non zero's in the list, the higher score
-          -- this effectively gives a higher weight for rows with long
-          -- words in them
-          lWord = max 1 (sum [longestWord row | row <- f])
-          emptyInRows = max 1 (sum [numberWords row | row <- f])
-          emptyInCols = max 1 (sum [numberWords col | col <- transpose f])
-          weighted = sum (map (\(row, weight) -> sum row * weight) fIndex)
+    weighted + 20 * completeRows `div` 1 + (10 * emptyInRows ) -- * emptyInCols)
+    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
+          emptyInRows = sum $ map numberWords f
+          emptyInCols = sum $ map numberWords (transpose f)
+          weighted    = sum $ map (\(row, weight) -> sum row * weight) fIndex
+          completeRows = length $ filter (==True) (map completeRow f)
 
 {-| Length of the longest word of non zeros -}
-longestWord :: [Int] -> Int
-longestWord row = maximum $ map length $ splitBy 0 row
+completeRow :: [Int] -> Bool
+completeRow = all (==1)
 
 numberWords :: [Int] -> Int
-numberWords row = max 1 (length (splitBy 0 row))
+numberWords row = case (length (filter (/=[]) (splitBy 0 row))) of
+                      1 -> 0
+                      x -> x
 
 splitBy :: (Eq a) => a -> [a] -> [[a]]
 splitBy delimiter = foldr f [[]]
@@ -191,8 +189,52 @@ testField = [[0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,1,1,0,0,0,0,0],
+             [0,0,1,1,1,0,0,0,0,0],
+             [0,0,1,1,1,1,0,0,0,0],
+             [1,1,1,1,1,1,1,1,1,1],
+             [1,1,1,1,1,1,1,1,1,1]]
+
+testField1 :: Field
+testField1 = [[0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0],
-             [0,2,2,0,0,0,0,0,0,0],
-             [2,2,2,2,2,0,2,2,2,2],
-             [2,2,2,2,2,2,2,2,2,0],
-             [0,2,2,2,2,2,2,0,2,2]]
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,1,1,0,0,0,0,0],
+             [0,0,1,1,1,0,0,0,0,0],
+             [0,0,1,1,1,1,0,0,1,0],
+             [0,1,1,1,1,1,0,0,1,1],
+             [1,1,1,1,1,1,1,1,0,1]]
+
+testField2 :: Field
+testField2 = [[0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,1,1,0,0,0,0,0],
+             [0,0,1,1,1,0,0,0,0,0],
+             [0,0,1,1,1,1,0,1,0,0],
+             [0,1,1,1,1,1,1,1,1,0],
+             [1,1,1,1,1,1,1,1,1,0]]
