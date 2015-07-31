@@ -17,7 +17,8 @@ module Block (Field,
               splitBy,
               getCell,
               getCoordsOfField,
-              isGrounded
+              isGrounded,
+              allPositions
              ) where
 
 import Control.Monad
@@ -198,6 +199,21 @@ isGrounded' ((xpos, ypos), f, rot, _amount) =
         hasGround = [getCell p f | p <- lowCoords]
 --        blHeight  = length $ cutBottom rot
     in lowCoords
+
+allPositions :: Int -> Int -> Field -> [Pair]
+allPositions fieldWidth fieldHeight f = positions
+    where topSpace    = length $ takeWhile match f
+          bottomSpace = length $ takeWhile match (reverse f)
+          leftSpace   = length $ takeWhile match (transpose f)
+          rightSpace  = length $ takeWhile match ((reverse . transpose) f)
+          blockWidth  = length (head f)
+          blockHeight = length f
+          minX        = - leftSpace
+          maxX        = fieldWidth  - blockWidth  + rightSpace
+          minY        = - topSpace
+          maxY        = fieldHeight - blockHeight + bottomSpace
+          positions   = [(x, y) | x <- [minX..maxX], y <- [minY..maxY]]
+          match       = \row -> sum row == 0
 
 -- test/debug
 

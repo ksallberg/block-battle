@@ -116,19 +116,6 @@ coorToPath (p:ps) = p2pLs' p ps
           p2pLs' p [] = []
           p2pLs' p ps = p2p p (head ps) ++ p2pLs' (head ps) (tail ps)
 
-allPositions :: Int -> Int -> Field -> [Pair]
-allPositions fieldHeight fieldWidth f = positions
-    where topSpace    = length $ takeWhile match f
-          bottomSpace = length $ takeWhile match (reverse f)
-          leftSpace   = length $ takeWhile match (transpose f)
-          rightSpace  = length $ takeWhile match ((reverse . transpose) f)
-          minX        = -leftSpace
-          maxX        = fieldWidth + rightSpace
-          minY        = -topSpace
-          maxY        = fieldHeight + bottomSpace
-          positions   = [(x, y) | x <- [minX..maxX], y <- [minY..maxY]]
-          match       = \row -> sum row == 0
-
 -- double list concated in order to apply the several alterPos returning pos
 insertToField :: [(Field, [Pair], Int)] -> Field -> [(Pair, Field, Field, Int)]
 insertToField xs f = concat [ [(p, insertBlock rot p f, rot, rotNum)
@@ -171,7 +158,7 @@ handleAction moves = do
         block     = thisPieceType state
         rots = allRotations block :: [(Field, Int)]
         positions = [(rot,
-                      allPositions (fieldHeight state) (fieldWidth state) rot,
+                      allPositions (fieldWidth state) (fieldHeight state) rot,
                       numRot)
                      | (rot, numRot) <- rots] :: [(Field, [Pair], Int)]
         allFields = keepOK $ insertToField positions myField
