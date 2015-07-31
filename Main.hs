@@ -154,8 +154,13 @@ handleAction moves = do
     state    <- get
     myPlayer <- getMyBot -- type Player
     gen      <- liftIO getStdGen
-    let myField   = clearField (field myPlayer)
-        block     = thisPieceType state
+    let myField    = clearField oneToZeroNoBlack (field myPlayer)
+        unclearF   = clearField oneToZero (field myPlayer)
+        usedHeight = usedFieldHeight unclearF
+        scoringFun = case usedHeight <= 5 of
+                         True  -> avoidEmptys
+                         False -> seekBottom
+        block      = thisPieceType state
         rots = allRotations block :: [(Field, Int)]
         positions = [(rot,
                       allPositions (fieldWidth state) (fieldHeight state) rot,
@@ -163,7 +168,7 @@ handleAction moves = do
                      | (rot, numRot) <- rots] :: [(Field, [Pair], Int)]
         allFields = keepOK $ insertToField positions myField
         weighted  = sortBy (comparing fst)
-                           [(fieldScore f, x)
+                           [(scoringFun f, x)
                             | x@(pos, f, b, _count) <- allFields]
         (count, pairPath) = findPath (thisPiecePosition state)
                                      myField
