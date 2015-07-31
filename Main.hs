@@ -123,9 +123,9 @@ allPositions fieldHeight fieldWidth f = positions
           leftSpace   = length $ takeWhile match (transpose f)
           rightSpace  = length $ takeWhile match ((reverse . transpose) f)
           minX        = -leftSpace
-          maxX        = fieldWidth + rightSpace
+          maxX        = (fieldWidth - 1)  + rightSpace
           minY        = -topSpace
-          maxY        = fieldHeight + bottomSpace
+          maxY        = (fieldHeight - 1) + bottomSpace
           positions   = [(x, y) | x <- [minX..maxX], y <- [minY..maxY]]
           match       = \row -> sum row == 0
 
