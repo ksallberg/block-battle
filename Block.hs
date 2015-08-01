@@ -153,16 +153,16 @@ numEmptys f = sum rows + sum cols
           cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
 
 avoidEmptys :: Field -> Int
-avoidEmptys f = weighted - 40000 * 0--numEmptys f
-    where fIndex      = (zip f (map (*15000) [1..])) :: [([Int], Int)]
-          weighted    = sum rowValues
-          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
+avoidEmptys f = weighted - 40000 * numEmptys f
+    where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
+          weighted  = sum rowValues
+          rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 seekBottom :: Field -> Int
 seekBottom f = sum rowValues
-    where fIndex      = (zip f (map (*5000) [1..])) :: [([Int], Int)]
-          weighted    = sum rowValues
-          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
+    where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
+          weighted  = sum rowValues
+          rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 {-| Length of the longest word of non zeros -}
 completeRow :: [Int] -> Bool
