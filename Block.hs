@@ -25,7 +25,9 @@ module Block (Field,
               usedFieldHeight,
               parseField,
               numEmptys,
-              numberWords
+              numberWords,
+              adjacents,
+              isEmptyCell
              ) where
 
 import Control.Monad
@@ -148,18 +150,32 @@ changeInstructions field (x, y) = snd $
           field
 
 numEmptys :: Field -> Int
-numEmptys f = sum rows + sum cols
-    where rows = [x-1 | x <- filter (>1) (map numberWords f)]
-          cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
+numEmptys f = length $ filter (==True) [isEmptyCell c f | c <- emptyCoords]
+    --(sum rows, sum cols)
+    where coords = [ (x,y) | x <- [0..((length (head f)) - 1)],
+                             y <- [0..((length f) - 1)]]
+          emptyCoords = filter (\z -> getCell z f == Just 0) coords
+    --where rows = [x-1 | x <- filter (>1) (map numberWords f)]
+    --      cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
+
+adjacent :: Pair -> [Pair]
+adjacent (x, y) = [(x-1,y-1), (x,y-1), (x+1,y-1), (x+1,y), (x+1,y+1),
+                   (x,y+1),(x-1,y+1),(x-1,y)]
+
+adjacents :: Pair -> Field -> [Maybe Int]
+adjacents p f = [getCell a f | a <- adjacent p]
+
+isEmptyCell :: Pair -> Field -> Bool
+isEmptyCell p f = not $ (Just 0) `elem` adjacents p f
 
 avoidEmptys :: Field -> Int
-avoidEmptys f = weighted - 40000 * numEmptys f
+avoidEmptys f = weighted - 14500 * numEmptys f
     where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
           weighted  = sum rowValues
           rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 seekBottom :: Field -> Int
-seekBottom f = sum rowValues
+seekBottom f = (sum rowValues) - 2500 * numEmptys f
     where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
           weighted  = sum rowValues
           rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
@@ -184,9 +200,9 @@ parseField str = let fieldParts = splitBy ';' str
                      | fieldPart <- fieldParts]
 
 getCell :: Pair -> Field -> Maybe Int
-getCell (x, y) f | y >= length f        = Nothing
-                 | x >= length (head f) = Nothing
-                 | otherwise            = Just $ (f !! y) !! x
+getCell (x, y) f | y >= length f        || y < 0 = Nothing
+                 | x >= length (head f) || x < 0 = Nothing
+                 | otherwise                     = Just $ (f !! y) !! x
 
 getCoordsOfField :: Field -> [Pair]
 getCoordsOfField f = concat

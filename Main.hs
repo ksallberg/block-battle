@@ -168,7 +168,7 @@ handleAction moves = do
         unclearF   = clearField oneToZero        (field myPlayer)
         scoringFun = case (usedFieldHeight unclearF) <= 6 of
                          True  -> avoidEmptys
-                         False -> seekBottom
+                         False -> avoidEmptys--seekBottom
         block      = thisPieceType state
         rots = allRotations block :: [(Field, Int)]
         positions = [(rot,
