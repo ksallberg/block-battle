@@ -151,12 +151,14 @@ changeInstructions field (x, y) = snd $
 
 numEmptys :: Field -> Int
 numEmptys f = length $ filter (==True) [isEmptyCell c f | c <- emptyCoords]
-    --(sum rows, sum cols)
     where coords = [ (x,y) | x <- [0..((length (head f)) - 1)],
                              y <- [0..((length f) - 1)]]
           emptyCoords = filter (\z -> getCell z f == Just 0) coords
-    --where rows = [x-1 | x <- filter (>1) (map numberWords f)]
-    --      cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
+
+numEmptys2 :: Field -> Int
+numEmptys2 f = sum rows + sum cols
+   where rows = [x-1 | x <- filter (>1) (map numberWords f)]
+         cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
 
 adjacent :: Pair -> [Pair]
 adjacent (x, y) = [(x-1,y-1), (x,y-1), (x+1,y-1), (x+1,y), (x+1,y+1),
@@ -169,7 +171,7 @@ isEmptyCell :: Pair -> Field -> Bool
 isEmptyCell p f = not $ (Just 0) `elem` adjacents p f
 
 avoidEmptys :: Field -> Int
-avoidEmptys f = weighted - 14500 * numEmptys f
+avoidEmptys f = weighted - 14500 * (numEmptys f) + (numEmptys2 f)
     where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
           weighted  = sum rowValues
           rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
