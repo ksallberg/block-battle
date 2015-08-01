@@ -30,7 +30,12 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 -}
-module Main where
+module Main (Move(..),
+             Context,
+             Player(..),
+             GameState(..),
+             handleAction,
+             main) where
 
 --import AStar
 import Block
@@ -87,10 +92,13 @@ data GameState = GameState {
 
 -- crude debugging flag
 debug' :: Bool
-debug' = True
+debug' = False
 
 debug :: String -> Context ()
 debug x = when debug' (liftIO $ hPutStrLn stderr x)
+
+debugIO :: IO () -> Context ()
+debugIO x = when debug' (liftIO x)
 
 {-| Get a list of moves required to get from point a to point b-}
 p2p :: Pair -> Pair -> [Move]
@@ -140,24 +148,25 @@ evalPath from to block field = and [not $ elem 3 (concat f) | f <- mapped]
     AStar can travel to, and return a list of moves representing the
     path to that location.
 -}
-findPath :: Pair -> Field -> [(Pair, Field, Field, Int)] -> (Int, [Move])
+findPath :: Pair -> Field
+                 -> [(Pair, Field, Field, Int)]
+                 -> (Int, Field, Pair, [Move])
 findPath _ _ [] = error "no possible moves"
 findPath origin field ((p, f, bl, count):xs) =
     case (evalPath origin p bl field) of
         False -> findPath origin field xs
-        True  -> (count, coorToPath (expandCoor origin p))
+        True  -> (count, bl, p, coorToPath (expandCoor origin p))
 
 {-| Handle the action given by the admin script!
     Make use of already set game state. -}
-handleAction :: Int -> Context ()
+handleAction :: Int -> Context (Field, Pair)
 handleAction moves = do
     state    <- get
     myPlayer <- getMyBot -- type Player
     gen      <- liftIO getStdGen
     let myField    = clearField oneToZeroNoBlack (field myPlayer)
-        unclearF   = clearField oneToZero (field myPlayer)
-        usedHeight = usedFieldHeight unclearF
-        scoringFun = case usedHeight <= 5 of
+        unclearF   = clearField oneToZero        (field myPlayer)
+        scoringFun = case (usedFieldHeight unclearF) <= 6 of
                          True  -> avoidEmptys
                          False -> seekBottom
         block      = thisPieceType state
@@ -170,18 +179,23 @@ handleAction moves = do
         weighted  = sortBy (comparing fst)
                            [(scoringFun f, x)
                             | x@(pos, f, b, _count) <- allFields]
-        (count, pairPath) = findPath (thisPiecePosition state)
-                                     myField
-                                     (reverse (map snd weighted))
+        (count, finalBl, pos, pairPath) = findPath (thisPiecePosition state)
+                                                   myField
+                                                   (reverse (map snd weighted))
         movePlan  = [TurnLeft | _ <- [1..count]] ++ pairPath
-    liftIO $ putStrLn $ formatMoves (optimizePath movePlan)
+    debug ("Rotations: " ++ show count)
+    debug ("Final block: ")
+    debugIO $ pretty finalBl
+    liftIO $ putStrLn $ formatMoves movePlan--(optimizePath movePlan)
+    return (finalBl, pos)
 
 -------------
 -- PARSING --
 -------------
 
 parse :: [String] -> Context ()
-parse ["action", "moves", move] = handleAction (read move :: Int)
+parse ["action", "moves", move] = do handleAction (read move :: Int)
+                                     return ()
 parse ("update":xs)             = parseUpdate xs
 parse ("settings":xs)           = parseSettings xs
 parse _                         = error "Unsupported command!"
@@ -262,7 +276,6 @@ loop :: Context ()
 loop = do
     line  <- liftIO getLine
     parse (words line)
-    state <- get
     liftIO (hFlush stdout)
     eof   <- liftIO isEOF
     unless eof loop
