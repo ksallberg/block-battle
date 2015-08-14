@@ -16,3 +16,4 @@ cabal.sandbox.config
 *.hp
 Main
 *.zip
+lux_logs
