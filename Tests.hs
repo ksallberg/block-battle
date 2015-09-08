@@ -38,8 +38,8 @@ run = do
 leftTest :: Block -> [Field]
 leftTest b = flipTest b flipLeft
 
-rightTest :: Block -> [Field]
-rightTest b = flipTest b flipRight
+-- rightTest :: Block -> [Field]
+-- rightTest b = flipTest b flipRight
 
 flipTest :: Block -> (Block -> Field -> Field) -> [Field]
 flipTest b f = [first, second, third, fourth, fifth]
@@ -177,7 +177,3 @@ blogki =
     [0,0,2,2,2,2,0,0,0,0],
     [2,0,2,2,2,2,2,2,2,0],
     [2,2,2,2,2,2,2,0,2,2]]
-
---blogki :: Field
---blogki = parseField $
---    "0,0,0,1,1,1,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;0,0,2,0,0,0,0,0,0,0;0,0,2,2,2,2,0,0,0,0;2,0,2,2,2,2,2,2,2,0;2,2,2,2,2,2,2,0,2,2"

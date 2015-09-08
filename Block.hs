@@ -6,7 +6,7 @@ module Block (Field,
               inverseCols,
               insertBlock,
               flipLeft,
-              flipRight,
+--              flipRight,
               getBlock,
               allRotations,
               clearField,
@@ -85,9 +85,11 @@ flipLeft :: Block -> Field -> Field
 flipLeft I f = transpose f
 flipLeft x f = (transpose . inverseRows) f
 
+{-
 flipRight :: Block -> Field -> Field
-flipRight I f = transpose f
+flipRight I f = flipLeft I f
 flipRight x f = (transpose . inverseCols) f
+-}
 
 allRotations :: Block -> [(Field, Int)]
 allRotations I = [(getBlock I, 0), (flipLeft I (getBlock I), 1)]
