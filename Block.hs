@@ -13,12 +13,16 @@ module Block (Field,
               pretty,
               prettys,
               testField,
-              fieldScore,
+              seekBottom,
+              avoidEmptys,
               splitBy,
               getCell,
               getCoordsOfField,
               isGrounded,
-              allPositions
+              allPositions,
+              oneToZero,
+              oneToZeroNoBlack,
+              usedFieldHeight
              ) where
 
 import Control.Monad
@@ -89,12 +93,18 @@ allRotations x = [(first, 0), (second, 1), (third, 2), (fourth, 3)]
           second = flipLeft x first
           third  = flipLeft x second
           fourth = flipLeft x third
-{-| 3->2: change black row to just be full. 3 messes with keepOK -}
-clearField :: Field -> Field
-clearField f = [[changeRule r | r <- row] | row <- f]
-    where changeRule 1 = 0
-          changeRule 3 = 2 -- don't use 3 as black row, keepOK messes up
-          changeRule x = x
+
+oneToZero :: Int -> Int
+oneToZero 1 = 0
+oneToZero x = x
+
+oneToZeroNoBlack :: Int -> Int
+oneToZeroNoBlack 1 = 0
+oneToZeroNoBlack 3 = 2
+oneToZeroNoBlack x = x
+
+clearField :: (Int -> Int) -> Field -> Field
+clearField changeRule f = [[changeRule r | r <- row] | row <- f]
 
 {-| Insert a block starting at a coordinate, in a field. Results in
     a new field where the block exists. Plus operation is used to merge
@@ -130,8 +140,17 @@ changeInstructions field (x, y) = snd $
           (0, [])
           field
 
-fieldScore :: Field -> Int
-fieldScore f =
+avoidEmptys :: Field -> Int
+avoidEmptys f =
+    weighted `div` (max 1 emptyInRows * max 1 emptyInCols)
+    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
+          emptyInRows = sum $ map numberWords f
+          emptyInCols = sum $ map numberWords (transpose f)
+          weighted    = sum rowValues
+          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
+
+seekBottom :: Field -> Int
+seekBottom f =
     weighted - 400 * (max 1 emptyInRows * max 1 emptyInCols)
     where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
           emptyInRows = sum $ map numberWords f
@@ -214,6 +233,11 @@ allPositions fieldWidth fieldHeight f = positions
           maxY        = fieldHeight - blockHeight + bottomSpace
           positions   = [(x, y) | x <- [minX..maxX], y <- [minY..maxY]]
           match       = \row -> sum row == 0
+
+usedFieldHeight :: Field -> Int
+usedFieldHeight f = length noEmpty
+     where noBlack = takeWhile (\row -> not $ all (==3) row) f
+           noEmpty = dropWhile (\row -> sum row == 0) noBlack
 
 -- test/debug
 
