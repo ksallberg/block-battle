@@ -12,7 +12,6 @@ module Block (Field,
               clearField,
               pretty,
               prettys,
-              testField,
               seekBottom,
               avoidEmptys,
               splitBy,
@@ -21,8 +20,14 @@ module Block (Field,
               isGrounded,
               allPositions,
               oneToZero,
+              oneToNine,
               oneToZeroNoBlack,
-              usedFieldHeight
+              usedFieldHeight,
+              parseField,
+              numEmptys,
+              numberWords,
+              adjacents,
+              isEmptyCell
              ) where
 
 import Control.Monad
@@ -98,6 +103,10 @@ oneToZero :: Int -> Int
 oneToZero 1 = 0
 oneToZero x = x
 
+oneToNine :: Int -> Int
+oneToNine 1 = 9
+oneToNine x = x
+
 oneToZeroNoBlack :: Int -> Int
 oneToZeroNoBlack 1 = 0
 oneToZeroNoBlack 3 = 2
@@ -140,32 +149,47 @@ changeInstructions field (x, y) = snd $
           (0, [])
           field
 
+numEmptys :: Field -> Int
+numEmptys f = length $ filter (==True) [isEmptyCell c f | c <- emptyCoords]
+    where coords = [ (x,y) | x <- [0..((length (head f)) - 1)],
+                             y <- [0..((length f) - 1)]]
+          emptyCoords = filter (\z -> getCell z f == Just 0) coords
+
+numEmptys2 :: Field -> Int
+numEmptys2 f = sum rows + sum cols
+   where rows = [x-1 | x <- filter (>1) (map numberWords f)]
+         cols = [x-1 | x <- filter (>1) (map numberWords (transpose f))]
+
+adjacent :: Pair -> [Pair]
+adjacent (x, y) = [(x-1,y-1), (x,y-1), (x+1,y-1), (x+1,y), (x+1,y+1),
+                   (x,y+1),(x-1,y+1),(x-1,y)]
+
+adjacents :: Pair -> Field -> [Maybe Int]
+adjacents p f = [getCell a f | a <- adjacent p]
+
+isEmptyCell :: Pair -> Field -> Bool
+isEmptyCell p f = not $ (Just 0) `elem` adjacents p f
+
 avoidEmptys :: Field -> Int
-avoidEmptys f =
-    weighted `div` (max 1 emptyInRows * max 1 emptyInCols)
-    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
-          emptyInRows = sum $ map numberWords f
-          emptyInCols = sum $ map numberWords (transpose f)
-          weighted    = sum rowValues
-          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
+avoidEmptys f = weighted - 14500 * (numEmptys f) + (numEmptys2 f)
+    where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
+          weighted  = sum rowValues
+          rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 seekBottom :: Field -> Int
-seekBottom f =
-    weighted - 400 * (max 1 emptyInRows * max 1 emptyInCols)
-    where fIndex      = (zip f (map (*1000) [1..])) :: [([Int], Int)]
-          emptyInRows = sum $ map numberWords f
-          emptyInCols = sum $ map numberWords (transpose f)
-          weighted    = sum rowValues
-          rowValues   = map (\(row, weight) -> sum (map (*weight) row)) fIndex
+seekBottom f = (sum rowValues) - 2500 * numEmptys f
+    where fIndex    = (zip f (map (*5000) [1..])) :: [([Int], Int)]
+          weighted  = sum rowValues
+          rowValues = map (\(row, weight) -> sum (map (*weight) row)) fIndex
 
 {-| Length of the longest word of non zeros -}
 completeRow :: [Int] -> Bool
 completeRow = all (==1)
 
 numberWords :: [Int] -> Int
-numberWords row = case (length (filter (/=[]) (splitBy 0 row))) of
-                      1 -> 0
-                      x -> x
+numberWords row = length $ filter (/=[]) (splitBy 0 noPreceding)
+    where noPreceding = dropWhile (==0) noTrailing
+          noTrailing  = reverse (dropWhile (==0) (reverse row))
 
 splitBy :: (Eq a) => a -> [a] -> [[a]]
 splitBy delimiter = foldr f [[]]
@@ -178,17 +202,14 @@ parseField str = let fieldParts = splitBy ';' str
                      | fieldPart <- fieldParts]
 
 getCell :: Pair -> Field -> Maybe Int
-getCell (x, y) f | y >= length f        = Nothing
-                 | x >= length (head f) = Nothing
-                 | otherwise            = Just $ (f !! y) !! x
+getCell (x, y) f | y >= length f        || y < 0 = Nothing
+                 | x >= length (head f) || x < 0 = Nothing
+                 | otherwise                     = Just $ (f !! y) !! x
 
 getCoordsOfField :: Field -> [Pair]
 getCoordsOfField f = concat
     [[(x, y) | x <- [0..(length row)-1], row !! x == 1]
      | (y, row)  <- zip [0..] f]
-
---cutBottom :: Field -> Field
---cutBottom f = reverse $ dropWhile (\row -> sum row == 0) (reverse f)
 
 {-
     Pick out the bottom line (max y) of the coordinates
@@ -235,9 +256,9 @@ allPositions fieldWidth fieldHeight f = positions
           match       = \row -> sum row == 0
 
 usedFieldHeight :: Field -> Int
-usedFieldHeight f = length noEmpty
-     where noBlack = takeWhile (\row -> not $ all (==3) row) f
-           noEmpty = dropWhile (\row -> sum row == 0) noBlack
+usedFieldHeight f = length noBlack
+     where noBlack = takeWhile (\row -> not $ all (==3) row) noEmpty
+           noEmpty = dropWhile (\row -> sum row == 0) f
 
 -- test/debug
 
@@ -246,105 +267,3 @@ pretty f = forM_ f $ \row -> putStrLn $ show row
 
 prettys :: [Field] -> IO ()
 prettys fs = forM_ fs $ \f -> pretty f >> putStrLn "----"
-
-leftTest :: Block -> [Field]
-leftTest b = flipTest b flipLeft
-
-rightTest :: Block -> [Field]
-rightTest b = flipTest b flipRight
-
-flipTest :: Block -> (Block -> Field -> Field) -> [Field]
-flipTest b f = [first, second, third, fourth, fifth]
-    where first  = getBlock b
-          second = f b first
-          third  = f b second
-          fourth = f b third
-          fifth  = f b fourth
-
-testIsGrounded :: Bool
-testIsGrounded = isGrounded ((1,14), testField, getBlock O, 0)
-
---testIsGrounded' :: [Maybe Int]
-testIsGrounded' = isGrounded' ((1,14), testField, getBlock O, 0)
-
-
-testInsertBlock :: (Int, Int) -> IO ()
-testInsertBlock coord = pretty $ insertBlock (getBlock T) coord testField
-
-testField :: Field
-testField = [[0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,1,1,0,0,0,0,0],
-             [0,0,1,1,1,0,0,0,0,0],
-             [0,0,1,1,1,1,0,0,0,0],
-             [1,1,1,1,1,1,1,1,1,1],
-             [1,1,1,1,1,1,1,1,1,1]]
-
-testField1 :: Field
-testField1 = [[0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,1,1,0,0,0,0,0],
-             [0,0,1,1,1,0,0,0,0,0],
-             [0,0,1,1,1,1,0,0,1,0],
-             [0,1,1,1,1,1,0,0,1,1],
-             [1,1,1,1,1,1,1,1,0,1]]
-
-testField2 :: Field
-testField2 = [[0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0,0,0],
-             [0,0,0,1,1,0,0,0,0,0],
-             [0,0,1,1,1,0,0,0,0,0],
-             [0,0,1,1,1,1,0,1,0,0],
-             [0,1,1,1,1,1,1,1,1,0],
-             [1,1,1,1,1,1,1,1,1,0]]
-
-testParse :: Field
-testParse = parseField $ "0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;" ++
-                         "0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0;" ++
-                         "0,0,0,0,0,0,0,0,0,0;0,0,0,2,0,0,0,0,0,0;" ++
-                         "2,2,2,2,0,2,2,0,2,0;2,2,2,0,2,2,2,2,2,0;" ++
-                         "0,0,2,0,2,2,2,2,0,0;2,2,2,2,2,2,2,0,2,0;" ++
-                         "0,2,2,0,0,2,0,2,2,0;0,2,2,2,2,2,2,2,2,0;" ++
-                         "2,2,2,0,2,2,0,0,2,0;2,2,0,2,0,2,2,0,2,0;" ++
-                         "2,2,0,2,2,2,2,0,2,0;2,2,2,2,2,2,2,0,2,0;" ++
-                         "0,0,2,0,0,2,2,0,2,0;2,2,2,0,2,2,0,2,2,0;" ++
-                         "3,3,3,3,3,3,3,3,3,0;3,3,3,3,3,3,3,3,3,0"
